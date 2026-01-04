@@ -4,397 +4,112 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Haldiram Invoice Generator</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #c41e3a 0%, #8b0000 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #c41e3a 0%, #8b0000 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 2em;
-            margin-bottom: 5px;
-        }
-
-        .header p {
-            font-size: 1em;
-            opacity: 0.9;
-        }
-
-        .content {
-            padding: 30px;
-        }
-
-        .form-section {
-            margin-bottom: 25px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            border-left: 5px solid #c41e3a;
-        }
-
-        .form-section h2 {
-            color: #2C3E50;
-            margin-bottom: 15px;
-            font-size: 1.3em;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .form-group label {
-            color: #34495E;
-            margin-bottom: 5px;
-            font-weight: 600;
-            font-size: 0.85em;
-        }
-
-        .form-group input,
-        .form-group select {
-            padding: 10px;
-            border: 2px solid #e0e0e0;
-            border-radius: 6px;
-            font-size: 0.95em;
-            transition: all 0.3s;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: #c41e3a;
-            box-shadow: 0 0 0 3px rgba(196, 30, 58, 0.1);
-        }
-
-        .items-section {
-            margin-top: 15px;
-        }
-
-        .item-row {
-            display: grid;
-            grid-template-columns: 100px 2fr 80px 100px 100px auto;
-            gap: 10px;
-            margin-bottom: 10px;
-            align-items: end;
-            padding: 12px;
-            background: white;
-            border-radius: 6px;
-            border: 1px solid #e0e0e0;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.9em;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #c41e3a 0%, #8b0000 100%);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(196, 30, 58, 0.4);
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background: #5a6268;
-        }
-
-        .btn-danger {
-            background: #dc3545;
-            color: white;
-            padding: 8px 12px;
-            font-size: 0.85em;
-        }
-
-        .btn-danger:hover {
-            background: #c82333;
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin-top: 25px;
-            flex-wrap: wrap;
-        }
-
-        .alert {
-            padding: 12px 15px;
-            border-radius: 6px;
-            margin-bottom: 15px;
-            display: none;
-        }
-
-        .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .alert-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 20px;
-        }
-
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #c41e3a;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .preview-link {
-            margin-top: 15px;
-            padding: 15px;
-            background: #fff3cd;
-            border-radius: 8px;
-            text-align: center;
-            border: 1px solid #ffc107;
-        }
-
-        .preview-link a {
-            color: #856404;
-            text-decoration: none;
-            font-weight: 600;
-            margin: 0 10px;
-        }
-
-        .preview-link a:hover {
-            text-decoration: underline;
-        }
-
-        @media (max-width: 768px) {
-            .item-row {
-                grid-template-columns: 1fr;
-            }
-
-            .btn-group {
-                flex-direction: column;
-            }
-
-            .header h1 {
-                font-size: 1.5em;
-            }
-        }
-
-        .company-info {
-            background: #fffbeb;
-            padding: 10px 15px;
-            border-radius: 6px;
-            margin-bottom: 15px;
-            font-size: 0.85em;
-            color: #856404;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🍽️ Haldiram Invoice Generator</h1>
-            <p>Restaurant Service Tax Invoice Generator</p>
-        </div>
+    <div class="main-container">
+        <!-- LEFT PANEL: FORM -->
+        <div class="form-panel">
+            <div class="header">
+                <h1>🍽️ Invoice Generator</h1>
+                <p>Restaurant Service Tax Invoice</p>
+            </div>
 
-        <div class="content">
-            <div id="alert" class="alert"></div>
-            
             <form id="invoiceForm">
-                <!-- Company/Store Details -->
-                <div class="form-section">
+                <div class="actions">
+                    <button type="button" class="btn btn-secondary" onclick="loadDefaults()">Load Defaults</button>
+                    <button type="button" class="btn btn-primary" onclick="generateFinal()">Download / Print</button>
+                    <span class="live-badge">Live Preview Active</span>
+                </div>
+
+                <!-- STORE DETAILS -->
+                <div class="section">
                     <h2>Store Details</h2>
-                    <div class="company-info">
-                        Default: Haldiram Manufacturing Company Private Limited, AIRIA MALL
+                    
+                    <div class="form-group">
+                        <label>Upload Logo</label>
+                        <input type="file" id="logo" name="logo" accept="image/*">
                     </div>
-                    <div class="form-row">
+
+                    <div class="form-grid">
                         <div class="form-group">
-                            <label for="logo">Upload Logo (Optional)</label>
-                            <input type="file" id="logo" name="logo" accept="image/*">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="companyName">Company Name</label>
-                            <input type="text" id="companyName" name="companyName" placeholder="Haldiram Manufacturing Company Private Limited">
+                            <label>Company Name</label>
+                            <input type="text" id="companyName" name="companyName">
                         </div>
                         <div class="form-group">
-                            <label for="storeName">Store Name</label>
-                            <input type="text" id="storeName" name="storeName" placeholder="AIRIA MALL">
+                            <label>Store Name</label>
+                            <input type="text" id="storeName" name="storeName">
                         </div>
                         <div class="form-group">
-                            <label for="storePhone">Store Phone</label>
-                            <input type="tel" id="storePhone" name="storePhone" placeholder="9911655288">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="storeAddress">Store Address</label>
-                            <input type="text" id="storeAddress" name="storeAddress" placeholder="Unit NO. FF 5A, 5B...">
+                            <label>Phone</label>
+                            <input type="text" id="storePhone" name="storePhone">
                         </div>
                         <div class="form-group">
-                            <label for="gstin">GSTIN</label>
-                            <input type="text" id="gstin" name="gstin" placeholder="06AAACH3170K1ZP">
+                            <label>GSTIN</label>
+                            <input type="text" id="gstin" name="gstin">
                         </div>
                     </div>
-                    <div class="form-row">
+                    
+                    <div class="form-grid">
                         <div class="form-group">
-                            <label for="registeredAddress">Registered Address</label>
-                            <input type="text" id="registeredAddress" name="registeredAddress" placeholder="Village Kherki Daula, Delhi Jaipur Highway...">
+                            <label>Store Address</label>
+                            <input type="text" id="storeAddress" name="storeAddress">
                         </div>
                         <div class="form-group">
-                            <label for="stateCode">State Code</label>
-                            <input type="text" id="stateCode" name="stateCode" placeholder="06">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="cin">CIN Number</label>
-                            <input type="text" id="cin" name="cin" placeholder="U74899HR1994PTC122349">
-                        </div>
-                        <div class="form-group">
-                            <label for="fssaiNo">FSSAI Number</label>
-                            <input type="text" id="fssaiNo" name="fssaiNo" placeholder="10823005001112">
-                        </div>
-                        <div class="form-group">
-                            <label for="sacCode">SAC Code</label>
-                            <input type="text" id="sacCode" name="sacCode" placeholder="996331">
+                            <label>Registered Address</label>
+                            <input type="text" id="registeredAddress" name="registeredAddress">
                         </div>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="storeId">Store ID</label>
-                            <input type="text" id="storeId" name="storeId" placeholder="RO435">
-                        </div>
-                        <div class="form-group">
-                            <label for="posNo">POS NO</label>
-                            <input type="text" id="posNo" name="posNo" placeholder="43503">
-                        </div>
-                        <div class="form-group">
-                            <label for="placeOfSupply">Place of Supply</label>
-                            <input type="text" id="placeOfSupply" name="placeOfSupply" placeholder="HR(06)">
-                        </div>
+
+                    <div class="form-grid">
+                        <div class="form-group"><label>State Code</label><input type="text" id="stateCode" name="stateCode"></div>
+                        <div class="form-group"><label>CIN</label><input type="text" id="cin" name="cin"></div>
+                        <div class="form-group"><label>FSSAI</label><input type="text" id="fssaiNo" name="fssaiNo"></div>
+                        <div class="form-group"><label>SAC</label><input type="text" id="sacCode" name="sacCode"></div>
+                    </div>
+                    
+                    <div class="form-grid">
+                        <div class="form-group"><label>Store ID</label><input type="text" id="storeId" name="storeId"></div>
+                        <div class="form-group"><label>POS No</label><input type="text" id="posNo" name="posNo"></div>
+                        <div class="form-group"><label>Place of Supply</label><input type="text" id="placeOfSupply" name="placeOfSupply"></div>
                     </div>
                 </div>
 
-                <!-- Invoice & Order Details -->
-                <div class="form-section">
-                    <h2>Invoice & Order Details</h2>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="invoiceNumber">Invoice Number</label>
-                            <input type="text" id="invoiceNumber" name="invoiceNumber" placeholder="435/2526/131636">
-                        </div>
-                        <div class="form-group">
-                            <label for="date">Date & Time</label>
-                            <input type="text" id="date" name="date" placeholder="01-01-2026 17:25 PM">
-                        </div>
-                        <div class="form-group">
-                            <label for="orderNo">Order No</label>
-                            <input type="text" id="orderNo" name="orderNo" placeholder="C253">
-                        </div>
+                <!-- INVOICE & CUSTOMER -->
+                <div class="section">
+                    <h2>Order Details</h2>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Invoice No</label><input type="text" id="invoiceNumber" name="invoiceNumber"></div>
+                        <div class="form-group"><label>Date & Time</label><input type="text" id="date" name="date"></div>
+                        <div class="form-group"><label>Order No</label><input type="text" id="orderNo" name="orderNo"></div>
+                        <div class="form-group"><label>Token No</label><input type="text" id="tokenNo" name="tokenNo"></div>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="tokenNo">Token No</label>
-                            <input type="text" id="tokenNo" name="tokenNo" placeholder="498">
-                        </div>
-                        <div class="form-group">
-                            <label for="cashierId">Cashier ID</label>
-                            <input type="text" id="cashierId" name="cashierId" placeholder="4006239">
-                        </div>
-                        <div class="form-group">
-                            <label for="cashierName">Cashier Name</label>
-                            <input type="text" id="cashierName" name="cashierName" placeholder="ANUJ">
-                        </div>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Cashier ID</label><input type="text" id="cashierId" name="cashierId"></div>
+                        <div class="form-group"><label>Cashier Name</label><input type="text" id="cashierName" name="cashierName"></div>
+                    </div>
+                    
+                    <div class="form-grid" style="margin-top:1rem; border-top:1px solid #ddd; padding-top:1rem">
+                        <div class="form-group"><label>Customer Name</label><input type="text" id="customerName" name="customerName"></div>
+                        <div class="form-group"><label>Customer Phone</label><input type="text" id="customerPhone" name="customerPhone"></div>
                     </div>
                 </div>
 
-                <!-- Customer Details -->
-                <div class="form-section">
-                    <h2>Customer Details</h2>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="customerName">Customer Name</label>
-                            <input type="text" id="customerName" name="customerName" placeholder="Guest Customer">
-                        </div>
-                        <div class="form-group">
-                            <label for="customerPhone">Customer Phone</label>
-                            <input type="tel" id="customerPhone" name="customerPhone" placeholder="9876543210">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Items -->
-                <div class="form-section">
+                <!-- ITEMS -->
+                <div class="section">
                     <h2>Items</h2>
-                    <div id="itemsContainer" class="items-section">
-                        <!-- Items will be added dynamically -->
+                    <div id="itemsContainer" class="items-container">
+                        <!-- Items injected by script -->
                     </div>
-                    <button type="button" class="btn btn-secondary" onclick="addItem()">+ Add Item</button>
+                    <button type="button" class="btn btn-secondary" onclick="addItem()" style="margin-top:1rem; width:100%">+ Add Item</button>
                 </div>
 
-                <!-- Payment Details -->
-                <div class="form-section">
-                    <h2>Payment Details</h2>
-                    <div class="form-row">
+                <!-- PAYMENT -->
+                <div class="section">
+                    <h2>Payment</h2>
+                    <div class="form-grid">
                         <div class="form-group">
-                            <label for="paymentMethod">Payment Method</label>
+                            <label>Method</label>
                             <select id="paymentMethod" name="paymentMethod">
                                 <option value="Cash">Cash</option>
                                 <option value="Pine Lab UPI">Pine Lab UPI</option>
@@ -404,322 +119,24 @@
                                 <option value="Google Pay">Google Pay</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label for="transactionRefNo">Transaction Ref No</label>
-                            <input type="text" id="transactionRefNo" name="transactionRefNo" placeholder="Optional">
-                        </div>
-                        <div class="form-group">
-                            <label for="serialNo">Serial No</label>
-                            <input type="text" id="serialNo" name="serialNo" placeholder="Optional">
-                        </div>
+                        <div class="form-group"><label>Trans. Ref</label><input type="text" id="transactionRefNo" name="transactionRefNo"></div>
+                        <div class="form-group"><label>Serial No</label><input type="text" id="serialNo" name="serialNo"></div>
                     </div>
                 </div>
-
-                <!-- Submit Buttons -->
-                <div class="btn-group">
-                    <button type="button" class="btn btn-secondary" onclick="loadDefaults()">Load Defaults</button>
-                    <button type="button" class="btn btn-secondary" onclick="resetForm()">Reset Form</button>
-                    <button type="submit" class="btn btn-primary">Generate Invoice</button>
-                </div>
             </form>
+            <div style="height: 50px;"></div> <!-- Spacer -->
+        </div>
 
-            <div id="loading" class="loading">
-                <div class="spinner"></div>
-                <p style="margin-top: 15px;">Generating invoice...</p>
+        <!-- RIGHT PANEL: PREVIEW -->
+        <div class="preview-panel">
+            <div class="preview-header">
+                <h3>PDF Preview</h3>
+                <span style="font-size:0.8rem; color:#666">Updates automatically</span>
             </div>
-
-            <div id="preview" class="preview-link" style="display: none;"></div>
+            <iframe id="previewFrame" class="preview-frame" src="about:blank"></iframe>
         </div>
     </div>
 
-    <script>
-        const API_URL = window.location.origin + '/api';
-        let itemCount = 0;
-
-        // Initialize form
-        document.addEventListener('DOMContentLoaded', function() {
-            // Set current date/time
-            const now = new Date();
-            const dateStr = now.toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-            const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
-            document.getElementById('date').value = dateStr + ' ' + timeStr;
-            
-            // Add initial items
-            addItem();
-        });
-
-        // Add item row
-        function addItem() {
-            itemCount++;
-            const itemsContainer = document.getElementById('itemsContainer');
-            const itemRow = document.createElement('div');
-            itemRow.className = 'item-row';
-            itemRow.id = `item-${itemCount}`;
-            itemRow.innerHTML = `
-                <div class="form-group">
-                    <label>Item Code</label>
-                    <input type="text" name="itemCode[]" placeholder="H000073">
-                </div>
-                <div class="form-group">
-                    <label>Item Name</label>
-                    <input type="text" name="itemName[]" placeholder="MASALA DOSA" required>
-                </div>
-                <div class="form-group">
-                    <label>Qty</label>
-                    <input type="number" name="itemQuantity[]" placeholder="1" min="1" value="1" required onchange="calculateItemTotal(${itemCount})">
-                </div>
-                <div class="form-group">
-                    <label>Rate (₹)</label>
-                    <input type="number" name="itemRate[]" placeholder="230.00" min="0" step="0.01" required onchange="calculateItemTotal(${itemCount})">
-                </div>
-                <div class="form-group">
-                    <label>Amount (₹)</label>
-                    <input type="number" name="itemAmount[]" placeholder="230.00" readonly>
-                </div>
-                <button type="button" class="btn btn-danger" onclick="removeItem(${itemCount})">✕</button>
-            `;
-            itemsContainer.appendChild(itemRow);
-        }
-
-        // Remove item row
-        function removeItem(id) {
-            const itemRow = document.getElementById(`item-${id}`);
-            if (itemRow) {
-                itemRow.remove();
-            }
-        }
-
-        // Calculate item total
-        function calculateItemTotal(id) {
-            const itemRow = document.getElementById(`item-${id}`);
-            if (itemRow) {
-                const quantity = parseFloat(itemRow.querySelector('input[name="itemQuantity[]"]').value) || 0;
-                const rate = parseFloat(itemRow.querySelector('input[name="itemRate[]"]').value) || 0;
-                const amount = quantity * rate;
-                itemRow.querySelector('input[name="itemAmount[]"]').value = amount.toFixed(2);
-            }
-        }
-
-        // Load default values
-        async function loadDefaults() {
-            try {
-                const response = await fetch(`${API_URL}/defaults`);
-                const result = await response.json();
-                
-                if (result.success) {
-                    const data = result.data;
-                    
-                    // Fill form with defaults
-                    document.getElementById('companyName').value = data.companyName || '';
-                    document.getElementById('storeName').value = data.storeName || '';
-                    document.getElementById('storePhone').value = data.storePhone || '';
-                    document.getElementById('storeAddress').value = data.storeAddress || '';
-                    document.getElementById('gstin').value = data.gstin || '';
-                    document.getElementById('storeId').value = data.storeId || '';
-                    document.getElementById('posNo').value = data.posNo || '';
-                    document.getElementById('placeOfSupply').value = data.placeOfSupply || '';
-                    
-                    document.getElementById('invoiceNumber').value = data.invoiceNumber || '';
-                    document.getElementById('orderNo').value = data.orderNo || '';
-                    document.getElementById('tokenNo').value = data.tokenNo || '';
-                    document.getElementById('cashierId').value = data.cashierId || '';
-                    document.getElementById('cashierName').value = data.cashierName || '';
-                    
-                    document.getElementById('customerName').value = data.customerName || '';
-                    document.getElementById('customerPhone').value = data.customerPhone || '';
-                    
-                    document.getElementById('paymentMethod').value = data.paymentMethod || 'Cash';
-                    
-                    showAlert('Default values loaded successfully!', 'success');
-                }
-            } catch (error) {
-                showAlert('Error loading defaults: ' + error.message, 'error');
-            }
-        }
-
-        // Reset form
-        function resetForm() {
-            document.getElementById('invoiceForm').reset();
-            const now = new Date();
-            const dateStr = now.toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-            const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
-            document.getElementById('date').value = dateStr + ' ' + timeStr;
-            document.getElementById('itemsContainer').innerHTML = '';
-            itemCount = 0;
-            addItem();
-            hideAlert();
-            document.getElementById('preview').style.display = 'none';
-        }
-
-        // Form submission
-        document.getElementById('invoiceForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            // Collect form data
-            const formData = await collectFormData();
-            
-            // Show loading
-            document.getElementById('loading').style.display = 'block';
-            hideAlert();
-            
-            try {
-                const response = await fetch(`${API_URL}/generate-invoice`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(formData)
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    showAlert('Invoice generated successfully!', 'success');
-                    showPreview(result.filename);
-                } else {
-                    showAlert('Error: ' + result.message, 'error');
-                }
-            } catch (error) {
-                showAlert('Error generating invoice: ' + error.message, 'error');
-            } finally {
-                document.getElementById('loading').style.display = 'none';
-            }
-        });
-
-        // Collect form data
-        async function collectFormData() {
-            const data = {};
-            
-            // Logo upload
-            const logoFile = document.getElementById('logo').files[0];
-            if (logoFile) {
-                const formData = new FormData();
-                formData.append('logo', logoFile);
-                
-                try {
-                    const response = await fetch(`${API_URL}/upload-logo`, {
-                        method: 'POST',
-                        body: formData
-                    });
-                    const result = await response.json();
-                    if (result.success) {
-                        data.logoPath = result.path;
-                    }
-                } catch (error) {
-                    console.error('Logo upload error:', error);
-                }
-            }
-            
-            // Store details
-            const companyName = document.getElementById('companyName').value.trim();
-            const storeName = document.getElementById('storeName').value.trim();
-            const storePhone = document.getElementById('storePhone').value.trim();
-            const storeAddress = document.getElementById('storeAddress').value.trim();
-            const gstin = document.getElementById('gstin').value.trim();
-            const registeredAddress = document.getElementById('registeredAddress').value.trim();
-            const stateCode = document.getElementById('stateCode').value.trim();
-            const cin = document.getElementById('cin').value.trim();
-            const fssaiNo = document.getElementById('fssaiNo').value.trim();
-            const sacCode = document.getElementById('sacCode').value.trim();
-            const storeId = document.getElementById('storeId').value.trim();
-            const posNo = document.getElementById('posNo').value.trim();
-            const placeOfSupply = document.getElementById('placeOfSupply').value.trim();
-            
-            if (companyName) data.companyName = companyName;
-            if (storeName) data.storeName = storeName;
-            if (storePhone) data.storePhone = storePhone;
-            if (storeAddress) data.storeAddress = storeAddress;
-            if (gstin) data.gstin = gstin;
-            if (registeredAddress) data.registeredAddress = registeredAddress;
-            if (stateCode) data.stateCode = stateCode;
-            if (cin) data.cin = cin;
-            if (fssaiNo) data.fssaiNo = fssaiNo;
-            if (sacCode) data.sacCode = sacCode;
-            if (storeId) data.storeId = storeId;
-            if (posNo) data.posNo = posNo;
-            if (placeOfSupply) data.placeOfSupply = placeOfSupply;
-            
-            // Invoice details
-            const invoiceNumber = document.getElementById('invoiceNumber').value.trim();
-            const date = document.getElementById('date').value.trim();
-            const orderNo = document.getElementById('orderNo').value.trim();
-            const tokenNo = document.getElementById('tokenNo').value.trim();
-            const cashierId = document.getElementById('cashierId').value.trim();
-            const cashierName = document.getElementById('cashierName').value.trim();
-            
-            if (invoiceNumber) data.invoiceNumber = invoiceNumber;
-            if (date) data.date = date;
-            if (orderNo) data.orderNo = orderNo;
-            if (tokenNo) data.tokenNo = tokenNo;
-            if (cashierId) data.cashierId = cashierId;
-            if (cashierName) data.cashierName = cashierName;
-            
-            // Customer details
-            const customerName = document.getElementById('customerName').value.trim();
-            const customerPhone = document.getElementById('customerPhone').value.trim();
-            
-            if (customerName) data.customerName = customerName;
-            if (customerPhone) data.customerPhone = customerPhone;
-            
-            // Items
-            const itemCodes = document.getElementsByName('itemCode[]');
-            const itemNames = document.getElementsByName('itemName[]');
-            const itemQuantities = document.getElementsByName('itemQuantity[]');
-            const itemRates = document.getElementsByName('itemRate[]');
-            
-            data.items = [];
-            for (let i = 0; i < itemNames.length; i++) {
-                if (itemNames[i].value.trim()) {
-                    data.items.push({
-                        code: itemCodes[i].value.trim() || `H00000${i + 1}`,
-                        name: itemNames[i].value.trim().toUpperCase(),
-                        quantity: parseInt(itemQuantities[i].value) || 1,
-                        rate: parseFloat(itemRates[i].value) || 0,
-                        hsnSac: '996331'
-                    });
-                }
-            }
-            
-            // Payment details
-            const paymentMethod = document.getElementById('paymentMethod').value;
-            const transactionRefNo = document.getElementById('transactionRefNo').value.trim();
-            const serialNo = document.getElementById('serialNo').value.trim();
-            
-            if (paymentMethod) data.paymentMethod = paymentMethod;
-            if (transactionRefNo) data.transactionRefNo = transactionRefNo;
-            if (serialNo) data.serialNo = serialNo;
-            
-            return data;
-        }
-
-        // Show alert
-        function showAlert(message, type) {
-            const alert = document.getElementById('alert');
-            alert.textContent = message;
-            alert.className = `alert alert-${type}`;
-            alert.style.display = 'block';
-            
-            setTimeout(() => {
-                hideAlert();
-            }, 5000);
-        }
-
-        // Hide alert
-        function hideAlert() {
-            const alert = document.getElementById('alert');
-            alert.style.display = 'none';
-        }
-
-        // Show preview links
-        function showPreview(filename) {
-            const preview = document.getElementById('preview');
-            preview.innerHTML = `
-                <p style="margin-bottom: 10px; font-weight: 600;">✅ Invoice ready!</p>
-                <a href="${API_URL}/view/${filename}" target="_blank">📄 View PDF</a>
-                <a href="${API_URL}/download/${filename}">💾 Download PDF</a>
-            `;
-            preview.style.display = 'block';
-        }
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>

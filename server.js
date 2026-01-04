@@ -1,14 +1,28 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+const fsPromises = require('fs').promises;
 const multer = require('multer');
+const helmet = require('helmet');
+const morgan = require('morgan');
 const { generateInvoicePDF, DEFAULT_VALUES } = require('./pdfGenerator');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      "img-src": ["'self'", "data:", "blob:"],
+      "script-src": ["'self'", "'unsafe-inline'"], // Allow inline scripts for now if needed, but per plan we are moving them. 
+    },
+  },
+}));
+app.use(morgan('dev'));
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
@@ -41,7 +55,7 @@ const upload = multer({
     const allowedTypes = /jpeg|jpg|png|gif/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
     const mimetype = allowedTypes.test(file.mimetype);
-    
+
     if (mimetype && extname) {
       return cb(null, true);
     } else {
@@ -87,10 +101,16 @@ app.get('/api/defaults', (req, res) => {
 });
 
 // Generate invoice
-app.post('/api/generate-invoice', async (req, res) => {
+app.post('/api/generate-invoice', async (req, res, next) => {
   try {
+    if (!req.body) {
+      return res.status(400).json({
+        success: false,
+        message: 'Request body is missing'
+      });
+    }
     const invoiceData = req.body;
-    
+
     // Generate unique filename
     const timestamp = Date.now();
     const random = Math.floor(Math.random() * 1000000);
@@ -109,12 +129,7 @@ app.post('/api/generate-invoice', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error generating invoice:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error generating invoice',
-      error: error.message
-    });
+    next(error);
   }
 });
 
@@ -178,31 +193,31 @@ app.get('/api/view/:filename', (req, res) => {
 });
 
 // List all invoices
-app.get('/api/invoices', (req, res) => {
+app.get('/api/invoices', async (req, res, next) => {
   try {
-    const files = fs.readdirSync(invoicesDir)
-      .filter(file => file.endsWith('.pdf'))
-      .map(file => ({
+    const files = await fsPromises.readdir(invoicesDir);
+    const pdfFiles = files.filter(file => file.endsWith('.pdf'));
+
+    const invoiceList = await Promise.all(pdfFiles.map(async file => {
+      const stats = await fsPromises.stat(path.join(invoicesDir, file));
+      return {
         filename: file,
-        createdAt: fs.statSync(path.join(invoicesDir, file)).birthtime,
+        createdAt: stats.birthtime,
         downloadUrl: `/api/download/${file}`,
         viewUrl: `/api/view/${file}`
-      }))
-      .sort((a, b) => b.createdAt - a.createdAt);
+      };
+    }));
+
+    invoiceList.sort((a, b) => b.createdAt - a.createdAt);
 
     res.json({
       success: true,
-      count: files.length,
-      invoices: files
+      count: invoiceList.length,
+      invoices: invoiceList
     });
 
   } catch (error) {
-    console.error('Error listing invoices:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error listing invoices',
-      error: error.message
-    });
+    next(error);
   }
 });
 
@@ -218,6 +233,16 @@ app.get('/api/health', (req, res) => {
 // Serve frontend
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Global Error Handler
+app.use((err, req, res, next) => {
+  console.error('Unhandled Error:', err);
+  res.status(500).json({
+    success: false,
+    message: 'Internal Server Error',
+    error: process.env.NODE_ENV === 'development' ? err.message : undefined
+  });
 });
 
 // Start server

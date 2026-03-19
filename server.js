@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
 const { generateInvoicePDF, DEFAULT_VALUES } = require('./pdfGenerator');
+const { generatePetrolPDF, PETROL_DEFAULT_VALUES } = require('./petrolGenerator');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -78,43 +79,45 @@ app.post('/api/upload-logo', upload.single('logo'), (req, res) => {
   }
 });
 
-// Get default values
+// Get default values (restaurant)
 app.get('/api/defaults', (req, res) => {
-  res.json({
-    success: true,
-    data: DEFAULT_VALUES
-  });
+  res.json({ success: true, data: DEFAULT_VALUES });
 });
 
-// Generate invoice
+// Get default values (petrol)
+app.get('/api/petrol-defaults', (req, res) => {
+  res.json({ success: true, data: PETROL_DEFAULT_VALUES });
+});
+
+// Generate restaurant invoice
 app.post('/api/generate-invoice', async (req, res) => {
   try {
     const invoiceData = req.body;
-    
-    // Generate unique filename
     const timestamp = Date.now();
     const random = Math.floor(Math.random() * 1000000);
     const filename = `invoice${random}${timestamp}.pdf`;
     const outputPath = path.join(invoicesDir, filename);
-
-    // Generate PDF
     await generateInvoicePDF(invoiceData, outputPath);
-
-    // Send response
-    res.json({
-      success: true,
-      message: 'Invoice generated successfully',
-      filename: filename,
-      downloadUrl: `/api/download/${filename}`
-    });
-
+    res.json({ success: true, message: 'Invoice generated successfully', filename, downloadUrl: `/api/download/${filename}` });
   } catch (error) {
     console.error('Error generating invoice:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error generating invoice',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: 'Error generating invoice', error: error.message });
+  }
+});
+
+// Generate petrol invoice
+app.post('/api/generate-petrol-invoice', async (req, res) => {
+  try {
+    const invoiceData = req.body;
+    const timestamp = Date.now();
+    const random = Math.floor(Math.random() * 1000000);
+    const filename = `petrol-${random}${timestamp}.pdf`;
+    const outputPath = path.join(invoicesDir, filename);
+    await generatePetrolPDF(invoiceData, outputPath);
+    res.json({ success: true, message: 'Petrol receipt generated successfully', filename, downloadUrl: `/api/download/${filename}` });
+  } catch (error) {
+    console.error('Error generating petrol invoice:', error);
+    res.status(500).json({ success: false, message: 'Error generating petrol invoice', error: error.message });
   }
 });
 

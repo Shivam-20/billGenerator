@@ -3,723 +3,621 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Haldiram Invoice Generator</title>
+    <title>Bill Generator Pro</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #c41e3a 0%, #8b0000 100%);
             min-height: 100vh;
-            padding: 20px;
+            padding: 20px 16px 40px;
+            background-color: #e6e2d8;
+            /* Folded/unfolded white paper look */
+            background-image:
+                linear-gradient(180deg,
+                    transparent 49.55%, rgba(155,140,110,0.28) 49.55%,
+                    rgba(155,140,110,0.28) 50%, rgba(255,255,248,0.55) 50%,
+                    rgba(255,255,248,0.55) 50.45%, transparent 50.45%),
+                linear-gradient(90deg,
+                    transparent 49.55%, rgba(155,140,110,0.18) 49.55%,
+                    rgba(155,140,110,0.18) 50%, rgba(255,255,248,0.45) 50%,
+                    rgba(255,255,248,0.45) 50.45%, transparent 50.45%),
+                repeating-linear-gradient(0deg,
+                    transparent, transparent 27px,
+                    rgba(190,178,150,0.11) 27px, rgba(190,178,150,0.11) 28px),
+                linear-gradient(160deg, #f4f1e8 0%, #ebe7da 45%, #f1eee5 100%);
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
+        /* ===== Page Header ===== */
+        .page-header {
+            max-width: 1100px; margin: 0 auto 20px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+            border-radius: 14px; padding: 22px 28px;
+            display: flex; align-items: center; gap: 18px;
+            box-shadow: 0 8px 28px rgba(0,0,0,0.22); position: relative; overflow: hidden;
         }
-
-        .header {
-            background: linear-gradient(135deg, #c41e3a 0%, #8b0000 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
+        .page-header::before {
+            content:''; position:absolute; top:-50%; right:-5%;
+            width:280px; height:280px;
+            background: radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 70%);
+            pointer-events:none;
         }
+        .header-icon { width:54px; height:54px; background:rgba(255,255,255,0.14); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:26px; flex-shrink:0; }
+        .header-text h1 { color:#fff; font-size:1.7em; font-weight:700; letter-spacing:-0.4px; }
+        .header-text p  { color:rgba(255,255,255,0.6); font-size:0.9em; margin-top:3px; }
 
-        .header h1 {
-            font-size: 2em;
-            margin-bottom: 5px;
+        /* ===== Bill Type Selector ===== */
+        .type-wrap { max-width:1100px; margin:0 auto 18px; }
+        .type-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+        .type-btn {
+            background:#fff; border:2px solid #e2ddd5; border-radius:13px;
+            padding:18px 22px; cursor:pointer;
+            display:flex; align-items:center; gap:14px;
+            transition:all 0.22s ease;
+            box-shadow:0 2px 8px rgba(0,0,0,0.07);
+            position:relative; overflow:hidden;
         }
+        .type-btn::after { content:''; position:absolute; bottom:0; left:0; right:0; height:3px; background:#e2ddd5; transition:background 0.22s; }
+        .type-btn:hover:not(.active) { transform:translateY(-2px); box-shadow:0 5px 16px rgba(0,0,0,0.11); border-color:#ccc; }
+        .type-btn.active { transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,0,0,0.13); }
+        .type-btn.active[data-type="restaurant"] { border-color:#c41e3a33; background:linear-gradient(145deg,#fff 55%,#fff5f7 100%); }
+        .type-btn.active[data-type="restaurant"]::after { background:#c41e3a; }
+        .type-btn.active[data-type="petrol"]     { border-color:#004F9F33; background:linear-gradient(145deg,#fff 55%,#f0f7ff 100%); }
+        .type-btn.active[data-type="petrol"]::after { background:#004F9F; }
+        .type-icon { width:50px; height:50px; border-radius:11px; background:#f5f4f1; display:flex; align-items:center; justify-content:center; font-size:2em; flex-shrink:0; transition:background 0.22s; }
+        .type-btn.active[data-type="restaurant"] .type-icon { background:#fff0f2; }
+        .type-btn.active[data-type="petrol"]     .type-icon { background:#e8f0fe; }
+        .type-info { text-align:left; }
+        .type-label { display:block; font-size:1.05em; font-weight:700; color:#1a1a2e; }
+        .type-sub   { display:block; font-size:0.78em; color:#999; margin-top:2px; }
+        .type-check { margin-left:auto; width:22px; height:22px; border-radius:50%; border:2px solid #ddd; display:flex; align-items:center; justify-content:center; font-size:11px; color:transparent; transition:all 0.2s; flex-shrink:0; }
+        .type-btn.active[data-type="restaurant"] .type-check { background:#c41e3a; border-color:#c41e3a; color:#fff; }
+        .type-btn.active[data-type="petrol"]     .type-check { background:#004F9F; border-color:#004F9F; color:#fff; }
 
-        .header p {
-            font-size: 1em;
-            opacity: 0.9;
-        }
+        /* ===== Form Container ===== */
+        .form-container { max-width:1100px; margin:0 auto; background:rgba(255,255,252,0.97); border-radius:14px; box-shadow:0 4px 22px rgba(0,0,0,0.09); overflow:hidden; border:1px solid rgba(200,195,180,0.3); }
+        .form-header { padding:18px 28px; border-bottom:1px solid #f0ede5; display:flex; align-items:center; justify-content:space-between; }
+        .form-header-title { font-size:1.05em; font-weight:700; color:#1a1a2e; }
+        .form-header-sub   { font-size:0.78em; color:#aaa; margin-top:2px; }
+        .form-body { padding:22px 28px; }
 
-        .content {
-            padding: 30px;
-        }
+        /* ===== Form Sections ===== */
+        .form-section { margin-bottom:18px; border:1px solid #eae7de; border-radius:11px; overflow:hidden; }
+        .section-title { padding:11px 16px; font-size:0.8em; font-weight:700; letter-spacing:0.4px; text-transform:uppercase; display:flex; align-items:center; gap:7px; }
+        #restaurant-form .section-title { background:linear-gradient(135deg,#c41e3a06,#c41e3a12); color:#8b0000; border-bottom:1px solid #c41e3a18; }
+        #petrol-form     .section-title { background:linear-gradient(135deg,#004F9F06,#004F9F12); color:#003070; border-bottom:1px solid #004F9F18; }
+        .section-body { padding:15px 16px; background:#fdfcf9; }
 
-        .form-section {
-            margin-bottom: 25px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            border-left: 5px solid #c41e3a;
-        }
+        /* ===== Form Fields ===== */
+        .form-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; margin-bottom:12px; }
+        .form-row:last-child { margin-bottom:0; }
+        .form-group { display:flex; flex-direction:column; }
+        .form-group label { font-size:0.72em; font-weight:600; color:#777; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.3px; }
+        .form-group input, .form-group select { padding:8px 11px; border:1.5px solid #e3dfd6; border-radius:8px; font-size:0.87em; color:#333; background:#fff; transition:all 0.18s; outline:none; }
+        #restaurant-form .form-group input:focus, #restaurant-form .form-group select:focus { border-color:#c41e3a; box-shadow:0 0 0 3px rgba(196,30,58,0.08); }
+        #petrol-form .form-group input:focus, #petrol-form .form-group select:focus { border-color:#004F9F; box-shadow:0 0 0 3px rgba(0,79,159,0.08); }
 
-        .form-section h2 {
-            color: #2C3E50;
-            margin-bottom: 15px;
-            font-size: 1.3em;
-        }
+        /* ===== Item Rows ===== */
+        .items-list { display:flex; flex-direction:column; gap:9px; }
+        .item-row { display:grid; gap:9px; padding:11px 13px; background:#fff; border-radius:9px; border:1.5px solid #ece8df; align-items:end; }
+        .restaurant-item-row { grid-template-columns:105px 2fr 68px 95px 95px 34px; }
+        .petrol-item-row     { grid-template-columns:2fr 110px 90px 105px 105px 34px; }
+        .item-row .form-group label { font-size:0.68em; }
+        .btn-remove { width:30px; height:30px; background:#fee2e2; color:#dc2626; border:none; border-radius:7px; cursor:pointer; font-size:0.9em; display:flex; align-items:center; justify-content:center; transition:all 0.18s; align-self:end; flex-shrink:0; }
+        .btn-remove:hover { background:#dc2626; color:#fff; }
+        .btn-add-item { padding:9px 14px; border:1.5px dashed #ccc; background:transparent; border-radius:8px; cursor:pointer; font-size:0.84em; color:#888; margin-top:9px; width:100%; transition:all 0.18s; }
+        #restaurant-form .btn-add-item:hover { border-color:#c41e3a; color:#c41e3a; background:#fff5f7; }
+        #petrol-form     .btn-add-item:hover { border-color:#004F9F; color:#004F9F; background:#f0f7ff; }
 
-        .form-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 15px;
-        }
+        /* ===== Action Bar ===== */
+        .action-bar { padding:18px 28px; border-top:1px solid #f0ede5; display:flex; gap:10px; justify-content:center; flex-wrap:wrap; background:#fdfcf9; }
+        .btn { padding:10px 22px; border:none; border-radius:9px; cursor:pointer; font-size:0.88em; font-weight:600; transition:all 0.18s; display:flex; align-items:center; gap:6px; }
+        .btn-ghost { background:transparent; border:1.5px solid #ddd; color:#666; }
+        .btn-ghost:hover { background:#f5f5f5; border-color:#bbb; }
+        .btn-primary-r { background:linear-gradient(135deg,#c41e3a,#8b0000); color:#fff; box-shadow:0 4px 14px rgba(196,30,58,0.32); }
+        .btn-primary-r:hover { transform:translateY(-1px); box-shadow:0 6px 18px rgba(196,30,58,0.42); }
+        .btn-primary-p { background:linear-gradient(135deg,#004F9F,#003070); color:#fff; box-shadow:0 4px 14px rgba(0,79,159,0.32); }
+        .btn-primary-p:hover { transform:translateY(-1px); box-shadow:0 6px 18px rgba(0,79,159,0.42); }
 
-        .form-group {
-            display: flex;
-            flex-direction: column;
-        }
+        /* ===== Alert ===== */
+        .alert-wrap { max-width:1100px; margin:0 auto 14px; }
+        .alert { padding:11px 16px; border-radius:9px; font-size:0.87em; font-weight:500; display:none; align-items:center; gap:9px; }
+        .alert-success { background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0; }
+        .alert-error   { background:#fef2f2; color:#991b1b; border:1px solid #fecaca; }
 
-        .form-group label {
-            color: #34495E;
-            margin-bottom: 5px;
-            font-weight: 600;
-            font-size: 0.85em;
-        }
+        /* ===== Loading ===== */
+        .loading { display:none; text-align:center; padding:18px; }
+        .spinner { border:3px solid #f0f0f0; border-top:3px solid #c41e3a; border-radius:50%; width:34px; height:34px; animation:spin 0.8s linear infinite; margin:0 auto; }
+        @keyframes spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
 
-        .form-group input,
-        .form-group select {
-            padding: 10px;
-            border: 2px solid #e0e0e0;
-            border-radius: 6px;
-            font-size: 0.95em;
-            transition: all 0.3s;
-        }
+        /* ===== Preview Card ===== */
+        .preview-card { max-width:1100px; margin:14px auto 0; background:#fff; border-radius:13px; padding:18px 22px; border:1px solid #e4e0d6; display:none; box-shadow:0 2px 12px rgba(0,0,0,0.07); }
+        .preview-title { font-weight:700; color:#1a1a2e; margin-bottom:11px; font-size:0.93em; }
+        .preview-links { display:flex; gap:10px; flex-wrap:wrap; }
+        .preview-link-btn { padding:9px 17px; border-radius:8px; font-size:0.84em; font-weight:600; text-decoration:none; display:flex; align-items:center; gap:5px; transition:all 0.18s; }
+        .preview-view     { background:#f0f9ff; color:#0369a1; border:1px solid #bae6fd; }
+        .preview-view:hover { background:#0369a1; color:#fff; }
+        .preview-download { background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; }
+        .preview-download:hover { background:#166534; color:#fff; }
 
-        .form-group input:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: #c41e3a;
-            box-shadow: 0 0 0 3px rgba(196, 30, 58, 0.1);
-        }
+        /* ===== Recent Invoices ===== */
+        .recent-wrap { max-width:1100px; margin:22px auto 0; }
+        .recent-header { font-size:0.98em; font-weight:700; color:#444; margin-bottom:11px; display:flex; align-items:center; gap:7px; }
+        .recent-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:10px; }
+        .recent-card { background:#fff; border:1px solid #e6e2d8; border-radius:10px; padding:13px 15px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 1px 4px rgba(0,0,0,0.05); transition:all 0.18s; }
+        .recent-card:hover { box-shadow:0 4px 14px rgba(0,0,0,0.1); transform:translateY(-1px); }
+        .recent-name { font-size:0.78em; color:#555; word-break:break-all; }
+        .recent-actions { display:flex; gap:6px; flex-shrink:0; margin-left:10px; }
+        .r-btn { width:29px; height:29px; border-radius:6px; border:none; cursor:pointer; font-size:0.83em; transition:all 0.18s; text-decoration:none; display:flex; align-items:center; justify-content:center; }
+        .r-view { background:#e0f2fe; color:#0369a1; }
+        .r-view:hover { background:#0369a1; color:#fff; }
+        .r-dl   { background:#dcfce7; color:#166534; }
+        .r-dl:hover { background:#166534; color:#fff; }
 
-        .items-section {
-            margin-top: 15px;
-        }
+        .note-box { background:#fffbeb; border:1px solid #fde68a; border-radius:7px; padding:7px 11px; font-size:0.78em; color:#92400e; margin-bottom:13px; }
 
-        .item-row {
-            display: grid;
-            grid-template-columns: 100px 2fr 80px 100px 100px auto;
-            gap: 10px;
-            margin-bottom: 10px;
-            align-items: end;
-            padding: 12px;
-            background: white;
-            border-radius: 6px;
-            border: 1px solid #e0e0e0;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.9em;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #c41e3a 0%, #8b0000 100%);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(196, 30, 58, 0.4);
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background: #5a6268;
-        }
-
-        .btn-danger {
-            background: #dc3545;
-            color: white;
-            padding: 8px 12px;
-            font-size: 0.85em;
-        }
-
-        .btn-danger:hover {
-            background: #c82333;
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin-top: 25px;
-            flex-wrap: wrap;
-        }
-
-        .alert {
-            padding: 12px 15px;
-            border-radius: 6px;
-            margin-bottom: 15px;
-            display: none;
-        }
-
-        .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .alert-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 20px;
-        }
-
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #c41e3a;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .preview-link {
-            margin-top: 15px;
-            padding: 15px;
-            background: #fff3cd;
-            border-radius: 8px;
-            text-align: center;
-            border: 1px solid #ffc107;
-        }
-
-        .preview-link a {
-            color: #856404;
-            text-decoration: none;
-            font-weight: 600;
-            margin: 0 10px;
-        }
-
-        .preview-link a:hover {
-            text-decoration: underline;
-        }
-
-        @media (max-width: 768px) {
-            .item-row {
-                grid-template-columns: 1fr;
-            }
-
-            .btn-group {
-                flex-direction: column;
-            }
-
-            .header h1 {
-                font-size: 1.5em;
-            }
-        }
-
-        .company-info {
-            background: #fffbeb;
-            padding: 10px 15px;
-            border-radius: 6px;
-            margin-bottom: 15px;
-            font-size: 0.85em;
-            color: #856404;
+        /* ===== Responsive ===== */
+        @media(max-width:768px){
+            .type-grid { grid-template-columns:1fr; }
+            .restaurant-item-row, .petrol-item-row { grid-template-columns:1fr 1fr; }
+            .page-header { padding:14px 18px; }
+            .header-text h1 { font-size:1.3em; }
+            .form-body { padding:14px 14px; }
+            .action-bar { padding:14px; }
+            .btn { flex:1; justify-content:center; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🍽️ Haldiram Invoice Generator</h1>
-            <p>Restaurant Service Tax Invoice Generator</p>
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="header-icon">📋</div>
+        <div class="header-text">
+            <h1>Bill Generator Pro</h1>
+            <p>Generate professional invoices &amp; receipts instantly</p>
+        </div>
+    </div>
+
+    <!-- Alert -->
+    <div class="alert-wrap"><div id="alert" class="alert"></div></div>
+
+    <!-- Bill Type Selector -->
+    <div class="type-wrap">
+        <div class="type-grid">
+            <button class="type-btn active" data-type="restaurant" onclick="switchType('restaurant')">
+                <div class="type-icon">🍽️</div>
+                <div class="type-info">
+                    <span class="type-label">Restaurant Bill</span>
+                    <span class="type-sub">Food &amp; Dining GST Invoice</span>
+                </div>
+                <div class="type-check">✓</div>
+            </button>
+            <button class="type-btn" data-type="petrol" onclick="switchType('petrol')">
+                <div class="type-icon">⛽</div>
+                <div class="type-info">
+                    <span class="type-label">Petrol Pump Bill</span>
+                    <span class="type-sub">Indian Fuel Station Receipt</span>
+                </div>
+                <div class="type-check">✓</div>
+            </button>
+        </div>
+    </div>
+
+    <!-- Form Container -->
+    <div class="form-container">
+
+        <!-- ======= RESTAURANT FORM ======= -->
+        <div id="restaurant-form">
+            <div class="form-header">
+                <div>
+                    <div class="form-header-title">🍽️ Restaurant Tax Invoice</div>
+                    <div class="form-header-sub">Haldiram-style GST Tax Invoice (CGST + SGST @ 2.5% each)</div>
+                </div>
+                <button class="btn btn-ghost" onclick="loadRDefaults()">⚡ Defaults</button>
+            </div>
+            <div class="form-body">
+
+                <div class="form-section">
+                    <div class="section-title">🏪 Store Details</div>
+                    <div class="section-body">
+                        <div class="note-box">Default: Haldiram Manufacturing Company Pvt. Ltd. — AIRIA MALL, Gurugram</div>
+                        <div class="form-row">
+                            <div class="form-group"><label>Logo (Optional)</label><input type="file" id="r-logo" accept="image/*"></div>
+                            <div class="form-group"><label>Company Name</label><input type="text" id="r-companyName" placeholder="Haldiram Manufacturing..."></div>
+                            <div class="form-group"><label>Store Name</label><input type="text" id="r-storeName" placeholder="AIRIA MALL"></div>
+                            <div class="form-group"><label>Phone</label><input type="tel" id="r-storePhone" placeholder="9911655288"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group" style="grid-column:span 2"><label>Store Address</label><input type="text" id="r-storeAddress" placeholder="Unit NO. FF 5A, 5B, Sector 68..."></div>
+                            <div class="form-group"><label>GSTIN</label><input type="text" id="r-gstin" placeholder="06AAACH3170K1ZP"></div>
+                            <div class="form-group"><label>SAC Code</label><input type="text" id="r-sacCode" placeholder="996331"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group" style="grid-column:span 2"><label>Registered Address</label><input type="text" id="r-registeredAddress" placeholder="Village Kherki Daula..."></div>
+                            <div class="form-group"><label>State Code</label><input type="text" id="r-stateCode" placeholder="06"></div>
+                            <div class="form-group"><label>CIN Number</label><input type="text" id="r-cin" placeholder="U74899HR1994PTC122349"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label>FSSAI No</label><input type="text" id="r-fssaiNo" placeholder="10823005001112"></div>
+                            <div class="form-group"><label>Store ID</label><input type="text" id="r-storeId" placeholder="RO435"></div>
+                            <div class="form-group"><label>POS No</label><input type="text" id="r-posNo" placeholder="43503"></div>
+                            <div class="form-group"><label>Place of Supply</label><input type="text" id="r-placeOfSupply" placeholder="HR(06)"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="section-title">📄 Invoice &amp; Order Details</div>
+                    <div class="section-body">
+                        <div class="form-row">
+                            <div class="form-group"><label>Invoice Number</label><input type="text" id="r-invoiceNumber" placeholder="435/2526/131636"></div>
+                            <div class="form-group"><label>Date &amp; Time</label><input type="text" id="r-date" placeholder="01-01-2026 17:25 PM"></div>
+                            <div class="form-group"><label>Order No</label><input type="text" id="r-orderNo" placeholder="C253"></div>
+                            <div class="form-group"><label>Token No</label><input type="text" id="r-tokenNo" placeholder="498"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label>Cashier ID</label><input type="text" id="r-cashierId" placeholder="4006239"></div>
+                            <div class="form-group"><label>Cashier Name</label><input type="text" id="r-cashierName" placeholder="ANUJ"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="section-title">👤 Customer Details</div>
+                    <div class="section-body">
+                        <div class="form-row">
+                            <div class="form-group"><label>Customer Name</label><input type="text" id="r-customerName" placeholder="Guest Customer"></div>
+                            <div class="form-group"><label>Customer Phone</label><input type="tel" id="r-customerPhone" placeholder="9876543210"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="section-title">🛒 Food Items</div>
+                    <div class="section-body">
+                        <div id="r-items" class="items-list"></div>
+                        <button type="button" class="btn-add-item" onclick="addRItem()">+ Add Item</button>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="section-title">💳 Payment Details</div>
+                    <div class="section-body">
+                        <div class="form-row">
+                            <div class="form-group"><label>Payment Method</label>
+                                <select id="r-paymentMethod">
+                                    <option>Cash</option><option>Pine Lab UPI</option><option>Card</option>
+                                    <option>Paytm</option><option>PhonePe</option><option>Google Pay</option>
+                                </select>
+                            </div>
+                            <div class="form-group"><label>Transaction Ref No</label><input type="text" id="r-transactionRefNo" placeholder="Optional"></div>
+                            <div class="form-group"><label>Serial No</label><input type="text" id="r-serialNo" placeholder="Optional"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="action-bar">
+                <button class="btn btn-ghost" onclick="loadRDefaults()">⚡ Load Defaults</button>
+                <button class="btn btn-ghost" onclick="resetR()">↺ Reset</button>
+                <button class="btn btn-primary-r" onclick="generateR()">🖨️ Generate Restaurant Bill</button>
+            </div>
         </div>
 
-        <div class="content">
-            <div id="alert" class="alert"></div>
-            
-            <form id="invoiceForm">
-                <!-- Company/Store Details -->
-                <div class="form-section">
-                    <h2>Store Details</h2>
-                    <div class="company-info">
-                        Default: Haldiram Manufacturing Company Private Limited, AIRIA MALL
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="logo">Upload Logo (Optional)</label>
-                            <input type="file" id="logo" name="logo" accept="image/*">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="companyName">Company Name</label>
-                            <input type="text" id="companyName" name="companyName" placeholder="Haldiram Manufacturing Company Private Limited">
-                        </div>
-                        <div class="form-group">
-                            <label for="storeName">Store Name</label>
-                            <input type="text" id="storeName" name="storeName" placeholder="AIRIA MALL">
-                        </div>
-                        <div class="form-group">
-                            <label for="storePhone">Store Phone</label>
-                            <input type="tel" id="storePhone" name="storePhone" placeholder="9911655288">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="storeAddress">Store Address</label>
-                            <input type="text" id="storeAddress" name="storeAddress" placeholder="Unit NO. FF 5A, 5B...">
-                        </div>
-                        <div class="form-group">
-                            <label for="gstin">GSTIN</label>
-                            <input type="text" id="gstin" name="gstin" placeholder="06AAACH3170K1ZP">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="registeredAddress">Registered Address</label>
-                            <input type="text" id="registeredAddress" name="registeredAddress" placeholder="Village Kherki Daula, Delhi Jaipur Highway...">
-                        </div>
-                        <div class="form-group">
-                            <label for="stateCode">State Code</label>
-                            <input type="text" id="stateCode" name="stateCode" placeholder="06">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="cin">CIN Number</label>
-                            <input type="text" id="cin" name="cin" placeholder="U74899HR1994PTC122349">
-                        </div>
-                        <div class="form-group">
-                            <label for="fssaiNo">FSSAI Number</label>
-                            <input type="text" id="fssaiNo" name="fssaiNo" placeholder="10823005001112">
-                        </div>
-                        <div class="form-group">
-                            <label for="sacCode">SAC Code</label>
-                            <input type="text" id="sacCode" name="sacCode" placeholder="996331">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="storeId">Store ID</label>
-                            <input type="text" id="storeId" name="storeId" placeholder="RO435">
-                        </div>
-                        <div class="form-group">
-                            <label for="posNo">POS NO</label>
-                            <input type="text" id="posNo" name="posNo" placeholder="43503">
-                        </div>
-                        <div class="form-group">
-                            <label for="placeOfSupply">Place of Supply</label>
-                            <input type="text" id="placeOfSupply" name="placeOfSupply" placeholder="HR(06)">
-                        </div>
-                    </div>
+        <!-- ======= PETROL FORM ======= -->
+        <div id="petrol-form" style="display:none">
+            <div class="form-header">
+                <div>
+                    <div class="form-header-title">⛽ Petrol Pump Receipt</div>
+                    <div class="form-header-sub">Indian Fuel Station Retail Outlet Receipt (Prices inclusive of Excise Duty &amp; VAT)</div>
                 </div>
-
-                <!-- Invoice & Order Details -->
-                <div class="form-section">
-                    <h2>Invoice & Order Details</h2>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="invoiceNumber">Invoice Number</label>
-                            <input type="text" id="invoiceNumber" name="invoiceNumber" placeholder="435/2526/131636">
-                        </div>
-                        <div class="form-group">
-                            <label for="date">Date & Time</label>
-                            <input type="text" id="date" name="date" placeholder="01-01-2026 17:25 PM">
-                        </div>
-                        <div class="form-group">
-                            <label for="orderNo">Order No</label>
-                            <input type="text" id="orderNo" name="orderNo" placeholder="C253">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="tokenNo">Token No</label>
-                            <input type="text" id="tokenNo" name="tokenNo" placeholder="498">
-                        </div>
-                        <div class="form-group">
-                            <label for="cashierId">Cashier ID</label>
-                            <input type="text" id="cashierId" name="cashierId" placeholder="4006239">
-                        </div>
-                        <div class="form-group">
-                            <label for="cashierName">Cashier Name</label>
-                            <input type="text" id="cashierName" name="cashierName" placeholder="ANUJ">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Customer Details -->
-                <div class="form-section">
-                    <h2>Customer Details</h2>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="customerName">Customer Name</label>
-                            <input type="text" id="customerName" name="customerName" placeholder="Guest Customer">
-                        </div>
-                        <div class="form-group">
-                            <label for="customerPhone">Customer Phone</label>
-                            <input type="tel" id="customerPhone" name="customerPhone" placeholder="9876543210">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Items -->
-                <div class="form-section">
-                    <h2>Items</h2>
-                    <div id="itemsContainer" class="items-section">
-                        <!-- Items will be added dynamically -->
-                    </div>
-                    <button type="button" class="btn btn-secondary" onclick="addItem()">+ Add Item</button>
-                </div>
-
-                <!-- Payment Details -->
-                <div class="form-section">
-                    <h2>Payment Details</h2>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="paymentMethod">Payment Method</label>
-                            <select id="paymentMethod" name="paymentMethod">
-                                <option value="Cash">Cash</option>
-                                <option value="Pine Lab UPI">Pine Lab UPI</option>
-                                <option value="Card">Card</option>
-                                <option value="Paytm">Paytm</option>
-                                <option value="PhonePe">PhonePe</option>
-                                <option value="Google Pay">Google Pay</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="transactionRefNo">Transaction Ref No</label>
-                            <input type="text" id="transactionRefNo" name="transactionRefNo" placeholder="Optional">
-                        </div>
-                        <div class="form-group">
-                            <label for="serialNo">Serial No</label>
-                            <input type="text" id="serialNo" name="serialNo" placeholder="Optional">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Submit Buttons -->
-                <div class="btn-group">
-                    <button type="button" class="btn btn-secondary" onclick="loadDefaults()">Load Defaults</button>
-                    <button type="button" class="btn btn-secondary" onclick="resetForm()">Reset Form</button>
-                    <button type="submit" class="btn btn-primary">Generate Invoice</button>
-                </div>
-            </form>
-
-            <div id="loading" class="loading">
-                <div class="spinner"></div>
-                <p style="margin-top: 15px;">Generating invoice...</p>
+                <button class="btn btn-ghost" onclick="loadPDefaults()">⚡ Defaults</button>
             </div>
+            <div class="form-body">
 
-            <div id="preview" class="preview-link" style="display: none;"></div>
+                <div class="form-section">
+                    <div class="section-title">🏭 Pump / Station Details</div>
+                    <div class="section-body">
+                        <div class="form-row">
+                            <div class="form-group"><label>Oil Company</label>
+                                <select id="p-oilCompany">
+                                    <option value="HP">HP – Hindustan Petroleum</option>
+                                    <option value="IOCL">IOCL – Indian Oil</option>
+                                    <option value="BPCL">BPCL – Bharat Petroleum</option>
+                                    <option value="Shell">Shell</option>
+                                    <option value="Essar">Essar</option>
+                                    <option value="Reliance">Reliance</option>
+                                </select>
+                            </div>
+                            <div class="form-group"><label>Pump / Station Name</label><input type="text" id="p-pumpName" placeholder="Sharma Filling Station"></div>
+                            <div class="form-group"><label>Dealer Code</label><input type="text" id="p-dealerCode" placeholder="DLR-HP-12345"></div>
+                            <div class="form-group"><label>Phone</label><input type="tel" id="p-pumpPhone" placeholder="9876543210"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group" style="grid-column:span 2"><label>Pump Address</label><input type="text" id="p-pumpAddress" placeholder="NH-8, Near Toll Plaza, Gurugram, Haryana - 122001"></div>
+                            <div class="form-group"><label>GSTIN</label><input type="text" id="p-gstin" placeholder="06AAACP1234K1ZX"></div>
+                            <div class="form-group"><label>License No</label><input type="text" id="p-licenseNo" placeholder="HR/PD/2020/00123"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="section-title">🧾 Receipt Details</div>
+                    <div class="section-body">
+                        <div class="form-row">
+                            <div class="form-group"><label>Receipt / Bill No</label><input type="text" id="p-billNumber" placeholder="RCP-2526-001"></div>
+                            <div class="form-group"><label>Date &amp; Time</label><input type="text" id="p-date" placeholder="19-03-2026 05:30 PM"></div>
+                            <div class="form-group"><label>Pump No</label><input type="text" id="p-pumpNo" placeholder="P-1"></div>
+                            <div class="form-group"><label>Nozzle No</label><input type="text" id="p-nozzleNo" placeholder="01"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label>Attendant Name</label><input type="text" id="p-attendantName" placeholder="Ravi Kumar"></div>
+                            <div class="form-group"><label>Attendant ID</label><input type="text" id="p-attendantId" placeholder="ATT001"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="section-title">🚗 Customer &amp; Vehicle</div>
+                    <div class="section-body">
+                        <div class="form-row">
+                            <div class="form-group"><label>Customer Name</label><input type="text" id="p-customerName" placeholder="Guest Customer"></div>
+                            <div class="form-group"><label>Vehicle Number</label><input type="text" id="p-vehicleNumber" placeholder="HR 26 AB 1234"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="section-title">⛽ Fuel Details</div>
+                    <div class="section-body">
+                        <div id="p-items" class="items-list"></div>
+                        <button type="button" class="btn-add-item" onclick="addPItem()">+ Add Fuel Item</button>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="section-title">💳 Payment Details</div>
+                    <div class="section-body">
+                        <div class="form-row">
+                            <div class="form-group"><label>Payment Method</label>
+                                <select id="p-paymentMethod">
+                                    <option>Cash</option><option>UPI</option><option>Card / POS</option>
+                                    <option>Paytm</option><option>PhonePe</option><option>Google Pay</option><option>NEFT / RTGS</option>
+                                </select>
+                            </div>
+                            <div class="form-group"><label>Transaction Ref No</label><input type="text" id="p-transactionRefNo" placeholder="Optional"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="action-bar">
+                <button class="btn btn-ghost" onclick="loadPDefaults()">⚡ Load Defaults</button>
+                <button class="btn btn-ghost" onclick="resetP()">↺ Reset</button>
+                <button class="btn btn-primary-p" onclick="generateP()">🖨️ Generate Petrol Receipt</button>
+            </div>
+        </div>
+
+        <!-- Loading Spinner (inside container) -->
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p style="margin-top:10px;color:#666;font-size:0.88em">Generating PDF…</p>
+        </div>
+    </div>
+
+    <!-- Preview Card -->
+    <div id="preview-card" class="preview-card">
+        <div class="preview-title">✅ Invoice ready!</div>
+        <div class="preview-links" id="preview-links"></div>
+    </div>
+
+    <!-- Recent Invoices -->
+    <div class="recent-wrap">
+        <div class="recent-header">🗂️ Recent Invoices</div>
+        <div id="recent-grid" class="recent-grid">
+            <div style="color:#aaa;font-size:0.84em;padding:8px 0">Loading…</div>
         </div>
     </div>
 
     <script>
-        const API_URL = window.location.origin + '/api';
-        let itemCount = 0;
+        const API = window.location.origin + '/api';
+        let rCount = 0, pCount = 0;
 
-        // Initialize form
-        document.addEventListener('DOMContentLoaded', function() {
-            // Set current date/time
-            const now = new Date();
-            const dateStr = now.toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-            const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
-            document.getElementById('date').value = dateStr + ' ' + timeStr;
-            
-            // Add initial items
-            addItem();
+        document.addEventListener('DOMContentLoaded', () => {
+            const ts = fmtDate(new Date());
+            setV('r-date', ts); setV('p-date', ts);
+            addRItem(); addPItem();
+            loadRecent();
         });
 
-        // Add item row
-        function addItem() {
-            itemCount++;
-            const itemsContainer = document.getElementById('itemsContainer');
-            const itemRow = document.createElement('div');
-            itemRow.className = 'item-row';
-            itemRow.id = `item-${itemCount}`;
-            itemRow.innerHTML = `
-                <div class="form-group">
-                    <label>Item Code</label>
-                    <input type="text" name="itemCode[]" placeholder="H000073">
-                </div>
-                <div class="form-group">
-                    <label>Item Name</label>
-                    <input type="text" name="itemName[]" placeholder="MASALA DOSA" required>
-                </div>
-                <div class="form-group">
-                    <label>Qty</label>
-                    <input type="number" name="itemQuantity[]" placeholder="1" min="1" value="1" required onchange="calculateItemTotal(${itemCount})">
-                </div>
-                <div class="form-group">
-                    <label>Rate (₹)</label>
-                    <input type="number" name="itemRate[]" placeholder="230.00" min="0" step="0.01" required onchange="calculateItemTotal(${itemCount})">
-                </div>
-                <div class="form-group">
-                    <label>Amount (₹)</label>
-                    <input type="number" name="itemAmount[]" placeholder="230.00" readonly>
-                </div>
-                <button type="button" class="btn btn-danger" onclick="removeItem(${itemCount})">✕</button>
-            `;
-            itemsContainer.appendChild(itemRow);
+        function fmtDate(d) {
+            return d.toLocaleDateString('en-IN',{day:'2-digit',month:'2-digit',year:'numeric'})
+                 + ' ' + d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});
         }
 
-        // Remove item row
-        function removeItem(id) {
-            const itemRow = document.getElementById(`item-${id}`);
-            if (itemRow) {
-                itemRow.remove();
-            }
-        }
-
-        // Calculate item total
-        function calculateItemTotal(id) {
-            const itemRow = document.getElementById(`item-${id}`);
-            if (itemRow) {
-                const quantity = parseFloat(itemRow.querySelector('input[name="itemQuantity[]"]').value) || 0;
-                const rate = parseFloat(itemRow.querySelector('input[name="itemRate[]"]').value) || 0;
-                const amount = quantity * rate;
-                itemRow.querySelector('input[name="itemAmount[]"]').value = amount.toFixed(2);
-            }
-        }
-
-        // Load default values
-        async function loadDefaults() {
-            try {
-                const response = await fetch(`${API_URL}/defaults`);
-                const result = await response.json();
-                
-                if (result.success) {
-                    const data = result.data;
-                    
-                    // Fill form with defaults
-                    document.getElementById('companyName').value = data.companyName || '';
-                    document.getElementById('storeName').value = data.storeName || '';
-                    document.getElementById('storePhone').value = data.storePhone || '';
-                    document.getElementById('storeAddress').value = data.storeAddress || '';
-                    document.getElementById('gstin').value = data.gstin || '';
-                    document.getElementById('storeId').value = data.storeId || '';
-                    document.getElementById('posNo').value = data.posNo || '';
-                    document.getElementById('placeOfSupply').value = data.placeOfSupply || '';
-                    
-                    document.getElementById('invoiceNumber').value = data.invoiceNumber || '';
-                    document.getElementById('orderNo').value = data.orderNo || '';
-                    document.getElementById('tokenNo').value = data.tokenNo || '';
-                    document.getElementById('cashierId').value = data.cashierId || '';
-                    document.getElementById('cashierName').value = data.cashierName || '';
-                    
-                    document.getElementById('customerName').value = data.customerName || '';
-                    document.getElementById('customerPhone').value = data.customerPhone || '';
-                    
-                    document.getElementById('paymentMethod').value = data.paymentMethod || 'Cash';
-                    
-                    showAlert('Default values loaded successfully!', 'success');
-                }
-            } catch (error) {
-                showAlert('Error loading defaults: ' + error.message, 'error');
-            }
-        }
-
-        // Reset form
-        function resetForm() {
-            document.getElementById('invoiceForm').reset();
-            const now = new Date();
-            const dateStr = now.toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-            const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
-            document.getElementById('date').value = dateStr + ' ' + timeStr;
-            document.getElementById('itemsContainer').innerHTML = '';
-            itemCount = 0;
-            addItem();
+        // ---- Type Switch ----
+        function switchType(t) {
+            document.querySelectorAll('.type-btn').forEach(b => b.classList.toggle('active', b.dataset.type === t));
+            document.getElementById('restaurant-form').style.display = t === 'restaurant' ? 'block' : 'none';
+            document.getElementById('petrol-form').style.display     = t === 'petrol'     ? 'block' : 'none';
+            document.getElementById('preview-card').style.display = 'none';
             hideAlert();
-            document.getElementById('preview').style.display = 'none';
         }
 
-        // Form submission
-        document.getElementById('invoiceForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            // Collect form data
-            const formData = await collectFormData();
-            
-            // Show loading
-            document.getElementById('loading').style.display = 'block';
-            hideAlert();
-            
-            try {
-                const response = await fetch(`${API_URL}/generate-invoice`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(formData)
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    showAlert('Invoice generated successfully!', 'success');
-                    showPreview(result.filename);
-                } else {
-                    showAlert('Error: ' + result.message, 'error');
-                }
-            } catch (error) {
-                showAlert('Error generating invoice: ' + error.message, 'error');
-            } finally {
-                document.getElementById('loading').style.display = 'none';
-            }
-        });
+        // ---- Restaurant Items ----
+        function addRItem() {
+            rCount++;
+            const id = rCount;
+            const row = document.createElement('div');
+            row.className = 'item-row restaurant-item-row'; row.id = `ri-${id}`;
+            row.innerHTML = `
+                <div class="form-group"><label>Item Code</label><input type="text" name="r-code[]" placeholder="H000073"></div>
+                <div class="form-group"><label>Item Name *</label><input type="text" name="r-name[]" placeholder="MASALA DOSA" required></div>
+                <div class="form-group"><label>Qty</label><input type="number" name="r-qty[]" value="1" min="1" onchange="calcR(${id})"></div>
+                <div class="form-group"><label>Rate (₹)</label><input type="number" name="r-rate[]" placeholder="0.00" step="0.01" onchange="calcR(${id})"></div>
+                <div class="form-group"><label>Amount (₹)</label><input type="number" name="r-amt[]" placeholder="0.00" readonly></div>
+                <button type="button" class="btn-remove" onclick="this.closest('[id]').remove()" title="Remove">✕</button>`;
+            document.getElementById('r-items').appendChild(row);
+        }
+        function calcR(id) {
+            const r = document.getElementById(`ri-${id}`);
+            if (!r) return;
+            const q = parseFloat(r.querySelector('[name="r-qty[]"]').value)||0;
+            const p = parseFloat(r.querySelector('[name="r-rate[]"]').value)||0;
+            r.querySelector('[name="r-amt[]"]').value = (q*p).toFixed(2);
+        }
 
-        // Collect form data
-        async function collectFormData() {
+        // ---- Petrol Items ----
+        function addPItem() {
+            pCount++;
+            const id = pCount;
+            const row = document.createElement('div');
+            row.className = 'item-row petrol-item-row'; row.id = `pi-${id}`;
+            row.innerHTML = `
+                <div class="form-group"><label>Product</label>
+                    <select name="p-product[]">
+                        <option>Petrol (MS)</option><option>Diesel (HSD)</option><option>CNG</option><option>LPG</option>
+                    </select></div>
+                <div class="form-group"><label>HSN Code</label><input type="text" name="p-hsn[]" value="27101230"></div>
+                <div class="form-group"><label>Qty (Ltrs)</label><input type="number" name="p-qty[]" placeholder="0.000" step="0.001" onchange="calcP(${id})"></div>
+                <div class="form-group"><label>Rate/Ltr (₹)</label><input type="number" name="p-rate[]" placeholder="94.72" step="0.01" onchange="calcP(${id})"></div>
+                <div class="form-group"><label>Amount (₹)</label><input type="number" name="p-amt[]" placeholder="0.00" readonly></div>
+                <button type="button" class="btn-remove" onclick="this.closest('[id]').remove()" title="Remove">✕</button>`;
+            document.getElementById('p-items').appendChild(row);
+        }
+        function calcP(id) {
+            const r = document.getElementById(`pi-${id}`);
+            if (!r) return;
+            const q = parseFloat(r.querySelector('[name="p-qty[]"]').value)||0;
+            const p = parseFloat(r.querySelector('[name="p-rate[]"]').value)||0;
+            r.querySelector('[name="p-amt[]"]').value = (q*p).toFixed(2);
+        }
+
+        // ---- Load Defaults ----
+        async function loadRDefaults() {
+            try {
+                const d = (await (await fetch(`${API}/defaults`)).json()).data;
+                const m = {companyName:'r-companyName',storeName:'r-storeName',storePhone:'r-storePhone',storeAddress:'r-storeAddress',gstin:'r-gstin',registeredAddress:'r-registeredAddress',stateCode:'r-stateCode',cin:'r-cin',fssaiNo:'r-fssaiNo',sacCode:'r-sacCode',storeId:'r-storeId',posNo:'r-posNo',placeOfSupply:'r-placeOfSupply',invoiceNumber:'r-invoiceNumber',orderNo:'r-orderNo',tokenNo:'r-tokenNo',cashierId:'r-cashierId',cashierName:'r-cashierName',customerName:'r-customerName',customerPhone:'r-customerPhone',paymentMethod:'r-paymentMethod'};
+                Object.entries(m).forEach(([k,id]) => setV(id, d[k]));
+                showAlert('Restaurant defaults loaded!', 'success');
+            } catch(e) { showAlert('Error: '+e.message,'error'); }
+        }
+        async function loadPDefaults() {
+            try {
+                const d = (await (await fetch(`${API}/petrol-defaults`)).json()).data;
+                const m = {oilCompany:'p-oilCompany',pumpName:'p-pumpName',dealerCode:'p-dealerCode',pumpPhone:'p-pumpPhone',pumpAddress:'p-pumpAddress',gstin:'p-gstin',licenseNo:'p-licenseNo',billNumber:'p-billNumber',pumpNo:'p-pumpNo',nozzleNo:'p-nozzleNo',attendantName:'p-attendantName',attendantId:'p-attendantId',customerName:'p-customerName',vehicleNumber:'p-vehicleNumber',paymentMethod:'p-paymentMethod'};
+                Object.entries(m).forEach(([k,id]) => setV(id, d[k]));
+                showAlert('Petrol defaults loaded!', 'success');
+            } catch(e) { showAlert('Error: '+e.message,'error'); }
+        }
+
+        // ---- Reset ----
+        function resetR() {
+            ['r-companyName','r-storeName','r-storePhone','r-storeAddress','r-gstin','r-registeredAddress','r-stateCode','r-cin','r-fssaiNo','r-sacCode','r-storeId','r-posNo','r-placeOfSupply','r-invoiceNumber','r-orderNo','r-tokenNo','r-cashierId','r-cashierName','r-customerName','r-customerPhone','r-transactionRefNo','r-serialNo']
+            .forEach(id => setV(id,''));
+            setV('r-date', fmtDate(new Date()));
+            document.getElementById('r-items').innerHTML=''; rCount=0; addRItem();
+            document.getElementById('preview-card').style.display='none'; hideAlert();
+        }
+        function resetP() {
+            ['p-pumpName','p-dealerCode','p-pumpPhone','p-pumpAddress','p-gstin','p-licenseNo','p-billNumber','p-pumpNo','p-nozzleNo','p-attendantName','p-attendantId','p-customerName','p-vehicleNumber','p-transactionRefNo']
+            .forEach(id => setV(id,''));
+            setV('p-date', fmtDate(new Date()));
+            document.getElementById('p-items').innerHTML=''; pCount=0; addPItem();
+            document.getElementById('preview-card').style.display='none'; hideAlert();
+        }
+
+        // ---- Collect & Submit ----
+        async function generateR() {
             const data = {};
-            
+            const flds = {companyName:'r-companyName',storeName:'r-storeName',storePhone:'r-storePhone',storeAddress:'r-storeAddress',gstin:'r-gstin',registeredAddress:'r-registeredAddress',stateCode:'r-stateCode',cin:'r-cin',fssaiNo:'r-fssaiNo',sacCode:'r-sacCode',storeId:'r-storeId',posNo:'r-posNo',placeOfSupply:'r-placeOfSupply',invoiceNumber:'r-invoiceNumber',date:'r-date',orderNo:'r-orderNo',tokenNo:'r-tokenNo',cashierId:'r-cashierId',cashierName:'r-cashierName',customerName:'r-customerName',customerPhone:'r-customerPhone',transactionRefNo:'r-transactionRefNo',serialNo:'r-serialNo',paymentMethod:'r-paymentMethod'};
+            Object.entries(flds).forEach(([k,id])=>{ const v=gv(id); if(v) data[k]=v; });
+
             // Logo upload
-            const logoFile = document.getElementById('logo').files[0];
-            if (logoFile) {
-                const formData = new FormData();
-                formData.append('logo', logoFile);
-                
-                try {
-                    const response = await fetch(`${API_URL}/upload-logo`, {
-                        method: 'POST',
-                        body: formData
-                    });
-                    const result = await response.json();
-                    if (result.success) {
-                        data.logoPath = result.path;
-                    }
-                } catch (error) {
-                    console.error('Logo upload error:', error);
-                }
+            const lf = document.getElementById('r-logo').files[0];
+            if (lf) {
+                const fd = new FormData(); fd.append('logo', lf);
+                try { const r = await (await fetch(`${API}/upload-logo`,{method:'POST',body:fd})).json(); if(r.success) data.logoPath=r.path; } catch(e){}
             }
-            
-            // Store details
-            const companyName = document.getElementById('companyName').value.trim();
-            const storeName = document.getElementById('storeName').value.trim();
-            const storePhone = document.getElementById('storePhone').value.trim();
-            const storeAddress = document.getElementById('storeAddress').value.trim();
-            const gstin = document.getElementById('gstin').value.trim();
-            const registeredAddress = document.getElementById('registeredAddress').value.trim();
-            const stateCode = document.getElementById('stateCode').value.trim();
-            const cin = document.getElementById('cin').value.trim();
-            const fssaiNo = document.getElementById('fssaiNo').value.trim();
-            const sacCode = document.getElementById('sacCode').value.trim();
-            const storeId = document.getElementById('storeId').value.trim();
-            const posNo = document.getElementById('posNo').value.trim();
-            const placeOfSupply = document.getElementById('placeOfSupply').value.trim();
-            
-            if (companyName) data.companyName = companyName;
-            if (storeName) data.storeName = storeName;
-            if (storePhone) data.storePhone = storePhone;
-            if (storeAddress) data.storeAddress = storeAddress;
-            if (gstin) data.gstin = gstin;
-            if (registeredAddress) data.registeredAddress = registeredAddress;
-            if (stateCode) data.stateCode = stateCode;
-            if (cin) data.cin = cin;
-            if (fssaiNo) data.fssaiNo = fssaiNo;
-            if (sacCode) data.sacCode = sacCode;
-            if (storeId) data.storeId = storeId;
-            if (posNo) data.posNo = posNo;
-            if (placeOfSupply) data.placeOfSupply = placeOfSupply;
-            
-            // Invoice details
-            const invoiceNumber = document.getElementById('invoiceNumber').value.trim();
-            const date = document.getElementById('date').value.trim();
-            const orderNo = document.getElementById('orderNo').value.trim();
-            const tokenNo = document.getElementById('tokenNo').value.trim();
-            const cashierId = document.getElementById('cashierId').value.trim();
-            const cashierName = document.getElementById('cashierName').value.trim();
-            
-            if (invoiceNumber) data.invoiceNumber = invoiceNumber;
-            if (date) data.date = date;
-            if (orderNo) data.orderNo = orderNo;
-            if (tokenNo) data.tokenNo = tokenNo;
-            if (cashierId) data.cashierId = cashierId;
-            if (cashierName) data.cashierName = cashierName;
-            
-            // Customer details
-            const customerName = document.getElementById('customerName').value.trim();
-            const customerPhone = document.getElementById('customerPhone').value.trim();
-            
-            if (customerName) data.customerName = customerName;
-            if (customerPhone) data.customerPhone = customerPhone;
-            
-            // Items
-            const itemCodes = document.getElementsByName('itemCode[]');
-            const itemNames = document.getElementsByName('itemName[]');
-            const itemQuantities = document.getElementsByName('itemQuantity[]');
-            const itemRates = document.getElementsByName('itemRate[]');
-            
-            data.items = [];
-            for (let i = 0; i < itemNames.length; i++) {
-                if (itemNames[i].value.trim()) {
-                    data.items.push({
-                        code: itemCodes[i].value.trim() || `H00000${i + 1}`,
-                        name: itemNames[i].value.trim().toUpperCase(),
-                        quantity: parseInt(itemQuantities[i].value) || 1,
-                        rate: parseFloat(itemRates[i].value) || 0,
-                        hsnSac: '996331'
-                    });
-                }
-            }
-            
-            // Payment details
-            const paymentMethod = document.getElementById('paymentMethod').value;
-            const transactionRefNo = document.getElementById('transactionRefNo').value.trim();
-            const serialNo = document.getElementById('serialNo').value.trim();
-            
-            if (paymentMethod) data.paymentMethod = paymentMethod;
-            if (transactionRefNo) data.transactionRefNo = transactionRefNo;
-            if (serialNo) data.serialNo = serialNo;
-            
-            return data;
+
+            const names=[...document.getElementsByName('r-name[]')];
+            const codes=[...document.getElementsByName('r-code[]')];
+            const qtys =[...document.getElementsByName('r-qty[]')];
+            const rates=[...document.getElementsByName('r-rate[]')];
+            data.items = names.map((n,i)=>n.value.trim()?{code:codes[i].value||`H00000${i+1}`,name:n.value.trim().toUpperCase(),quantity:parseInt(qtys[i].value)||1,rate:parseFloat(rates[i].value)||0,hsnSac:'996331'}:null).filter(Boolean);
+
+            await submit(`${API}/generate-invoice`, data);
         }
 
-        // Show alert
-        function showAlert(message, type) {
-            const alert = document.getElementById('alert');
-            alert.textContent = message;
-            alert.className = `alert alert-${type}`;
-            alert.style.display = 'block';
-            
-            setTimeout(() => {
-                hideAlert();
-            }, 5000);
+        async function generateP() {
+            const data = {};
+            const flds = {oilCompany:'p-oilCompany',pumpName:'p-pumpName',dealerCode:'p-dealerCode',pumpPhone:'p-pumpPhone',pumpAddress:'p-pumpAddress',gstin:'p-gstin',licenseNo:'p-licenseNo',billNumber:'p-billNumber',date:'p-date',pumpNo:'p-pumpNo',nozzleNo:'p-nozzleNo',attendantName:'p-attendantName',attendantId:'p-attendantId',customerName:'p-customerName',vehicleNumber:'p-vehicleNumber',paymentMethod:'p-paymentMethod',transactionRefNo:'p-transactionRefNo'};
+            Object.entries(flds).forEach(([k,id])=>{ const v=gv(id); if(v) data[k]=v; });
+
+            const prods=[...document.getElementsByName('p-product[]')];
+            const hsns =[...document.getElementsByName('p-hsn[]')];
+            const qtys =[...document.getElementsByName('p-qty[]')];
+            const rates=[...document.getElementsByName('p-rate[]')];
+            data.items = prods.map((p,i)=>{
+                const q=parseFloat(qtys[i].value); const r=parseFloat(rates[i].value);
+                return (q>0&&r>0)?{product:p.value,hsnCode:hsns[i].value||'27101230',quantity:q,ratePerLitre:r}:null;
+            }).filter(Boolean);
+
+            if (!data.items.length) { showAlert('Add at least one fuel item with qty & rate.','error'); return; }
+            await submit(`${API}/generate-petrol-invoice`, data);
         }
 
-        // Hide alert
-        function hideAlert() {
-            const alert = document.getElementById('alert');
-            alert.style.display = 'none';
+        async function submit(url, data) {
+            document.getElementById('loading').style.display='block';
+            document.getElementById('preview-card').style.display='none';
+            hideAlert();
+            try {
+                const res = await (await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})).json();
+                if (res.success) { showAlert('Generated successfully!','success'); showPreview(res.filename); loadRecent(); }
+                else showAlert('Error: '+res.message,'error');
+            } catch(e) { showAlert('Error: '+e.message,'error'); }
+            finally { document.getElementById('loading').style.display='none'; }
         }
 
-        // Show preview links
-        function showPreview(filename) {
-            const preview = document.getElementById('preview');
-            preview.innerHTML = `
-                <p style="margin-bottom: 10px; font-weight: 600;">✅ Invoice ready!</p>
-                <a href="${API_URL}/view/${filename}" target="_blank">📄 View PDF</a>
-                <a href="${API_URL}/download/${filename}">💾 Download PDF</a>
-            `;
-            preview.style.display = 'block';
+        // ---- Preview ----
+        function showPreview(fn) {
+            document.getElementById('preview-links').innerHTML = `
+                <a href="${API}/view/${fn}" target="_blank" class="preview-link-btn preview-view">📄 View PDF</a>
+                <a href="${API}/download/${fn}" class="preview-link-btn preview-download">💾 Download PDF</a>`;
+            document.getElementById('preview-card').style.display='block';
         }
+
+        // ---- Alert ----
+        function showAlert(msg, type) {
+            const el = document.getElementById('alert');
+            el.textContent = (type==='success'?'✅ ':'❌ ') + msg;
+            el.className = `alert alert-${type}`;
+            el.style.display = 'flex';
+            setTimeout(hideAlert, 5000);
+        }
+        function hideAlert() { document.getElementById('alert').style.display='none'; }
+
+        // ---- Recent Invoices ----
+        async function loadRecent() {
+            const c = document.getElementById('recent-grid');
+            try {
+                const res = await (await fetch(`${API}/invoices`)).json();
+                if (!res.invoices?.length) { c.innerHTML='<div style="color:#aaa;font-size:0.84em;padding:8px 0">No invoices yet.</div>'; return; }
+                c.innerHTML = res.invoices.slice(0,12).map(inv=>`
+                    <div class="recent-card">
+                        <div class="recent-name">${inv.filename.startsWith('petrol')?'⛽':'🍽️'} ${inv.filename}</div>
+                        <div class="recent-actions">
+                            <a href="${API}/view/${inv.filename}" target="_blank" class="r-btn r-view" title="View">👁</a>
+                            <a href="${API}/download/${inv.filename}" class="r-btn r-dl" title="Download">⬇</a>
+                        </div>
+                    </div>`).join('');
+            } catch(e) { c.innerHTML='<div style="color:#aaa;font-size:0.84em">Could not load invoices.</div>'; }
+        }
+
+        // ---- Helpers ----
+        function setV(id, v) { const el=document.getElementById(id); if(el&&v!=null) el.value=v; }
+        function gv(id) { return document.getElementById(id)?.value?.trim()||''; }
     </script>
 </body>
 </html>

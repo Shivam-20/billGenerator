@@ -7,7 +7,10 @@ const fsPromises = require('fs').promises;
 const multer = require('multer');
 const helmet = require('helmet');
 const morgan = require('morgan');
-const { generateInvoicePDF, DEFAULT_VALUES } = require('./pdfGenerator');
+const { generateInvoicePDF, DEFAULT_VALUES, LAYOUTS } = require('./pdfGenerator');
+const { parseCSV } = require('./csvParser');
+const archiver = require('archiver');
+const { PDFDocument } = require('pdf-lib');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -18,7 +21,8 @@ app.use(helmet({
     directives: {
       ...helmet.contentSecurityPolicy.getDefaultDirectives(),
       "img-src": ["'self'", "data:", "blob:"],
-      "script-src": ["'self'", "'unsafe-inline'"], // Allow inline scripts for now if needed, but per plan we are moving them. 
+      "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.tailwindcss.com"],
+      "script-src-attr": ["'unsafe-inline'"],
     },
   },
 }));
@@ -26,6 +30,7 @@ app.use(morgan('dev'));
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
+app.use('/sample', express.static(path.join(__dirname, 'sample')));
 
 // Ensure directories exist
 const invoicesDir = path.join(__dirname, 'invoices');
@@ -64,6 +69,19 @@ const upload = multer({
   }
 });
 
+// Multer for CSV uploads
+const csvStorage = multer.memoryStorage();
+const csvUpload = multer({
+  storage: csvStorage,
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
+  fileFilter: function (req, file, cb) {
+    if (file.mimetype === 'text/csv' || path.extname(file.originalname).toLowerCase() === '.csv') {
+      return cb(null, true);
+    }
+    cb(new Error('Only CSV files are allowed'));
+  }
+});
+
 // API Routes
 
 // Upload logo
@@ -98,6 +116,11 @@ app.get('/api/defaults', (req, res) => {
     success: true,
     data: DEFAULT_VALUES
   });
+});
+
+// Available layouts
+app.get('/api/layouts', (req, res) => {
+  res.json({ success: true, layouts: LAYOUTS });
 });
 
 // Generate invoice
@@ -192,9 +215,12 @@ app.get('/api/view/:filename', (req, res) => {
   }
 });
 
-// List all invoices
+// List all invoices (with pagination)
 app.get('/api/invoices', async (req, res, next) => {
   try {
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
+
     const files = await fsPromises.readdir(invoicesDir);
     const pdfFiles = files.filter(file => file.endsWith('.pdf'));
 
@@ -210,12 +236,110 @@ app.get('/api/invoices', async (req, res, next) => {
 
     invoiceList.sort((a, b) => b.createdAt - a.createdAt);
 
+    const total = invoiceList.length;
+    const start = (page - 1) * limit;
+    const paginated = invoiceList.slice(start, start + limit);
+
     res.json({
       success: true,
-      count: invoiceList.length,
-      invoices: invoiceList
+      total,
+      page,
+      limit,
+      pages: Math.ceil(total / limit),
+      count: paginated.length,
+      invoices: paginated
     });
 
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Delete a single invoice
+app.delete('/api/invoices/:filename', async (req, res, next) => {
+  try {
+    const filename = path.basename(req.params.filename); // prevent traversal
+    if (!filename.endsWith('.pdf')) {
+      return res.status(400).json({ success: false, message: 'Invalid filename' });
+    }
+    const filePath = path.join(invoicesDir, filename);
+    try {
+      await fsPromises.access(filePath);
+    } catch {
+      return res.status(404).json({ success: false, message: 'Invoice not found' });
+    }
+    await fsPromises.unlink(filePath);
+    res.json({ success: true, message: 'Invoice deleted' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Bulk generate invoices from CSV
+app.post('/api/bulk-generate', csvUpload.single('file'), async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No CSV file uploaded' });
+    }
+
+    const { invoices, errors } = parseCSV(req.file.buffer);
+    if (invoices.length === 0) {
+      return res.status(400).json({ success: false, message: 'No valid invoices found in CSV', errors });
+    }
+
+    const output = req.query.output === 'merged' ? 'merged' : 'zip';
+    const layoutOverride = LAYOUTS.includes(req.query.layout) ? req.query.layout : null;
+
+    // Generate all PDFs
+    const generated = [];
+    for (let i = 0; i < invoices.length; i++) {
+      if (layoutOverride) invoices[i].layout = layoutOverride;
+      const timestamp = Date.now();
+      const random = Math.floor(Math.random() * 1000000);
+      const filename = `invoice${random}${timestamp}.pdf`;
+      const outputPath = path.join(invoicesDir, filename);
+      await generateInvoicePDF(invoices[i], outputPath);
+      generated.push({ filename, outputPath });
+    }
+
+    if (output === 'merged') {
+      // Merge all PDFs into one using pdf-lib
+      const mergedPdf = await PDFDocument.create();
+      for (const { outputPath } of generated) {
+        const pdfBytes = await fsPromises.readFile(outputPath);
+        const srcDoc = await PDFDocument.load(pdfBytes);
+        const pages = await mergedPdf.copyPages(srcDoc, srcDoc.getPageIndices());
+        pages.forEach(page => mergedPdf.addPage(page));
+      }
+      const mergedBytes = await mergedPdf.save();
+      const mergedFilename = `bulk-merged-${Date.now()}.pdf`;
+      const mergedPath = path.join(invoicesDir, mergedFilename);
+      await fsPromises.writeFile(mergedPath, mergedBytes);
+
+      res.json({
+        success: true,
+        message: `Merged ${generated.length} invoices into one PDF`,
+        count: generated.length,
+        skipped: errors.length,
+        errors,
+        filename: mergedFilename,
+        downloadUrl: `/api/download/${mergedFilename}`
+      });
+    } else {
+      // ZIP mode — stream archive
+      res.setHeader('Content-Type', 'application/zip');
+      res.setHeader('Content-Disposition', `attachment; filename="invoices-${Date.now()}.zip"`);
+
+      const archive = archiver('zip', { zlib: { level: 5 } });
+      archive.on('error', (err) => next(err));
+      archive.pipe(res);
+
+      for (const { filename, outputPath } of generated) {
+        archive.file(outputPath, { name: filename });
+      }
+
+      await archive.finalize();
+    }
   } catch (error) {
     next(error);
   }
@@ -255,6 +379,9 @@ app.listen(PORT, () => {
   console.log(`  GET  /api/download/:filename - Download invoice`);
   console.log(`  GET  /api/view/:filename    - View invoice in browser`);
   console.log(`  GET  /api/invoices        - List all invoices`);
+  console.log(`  DELETE /api/invoices/:filename - Delete an invoice`);
+  console.log(`  POST /api/bulk-generate   - Bulk generate from CSV`);
+  console.log(`  GET  /sample/sample-invoices.csv - Download sample CSV`);
 });
 
 module.exports = app;

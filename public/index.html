@@ -1,116 +1,157 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Haldiram Invoice Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              brand: { 50:'#fef2f2', 100:'#fee2e2', 200:'#fecaca', 300:'#fca5a5', 400:'#f87171', 500:'#ef4444', 600:'#dc2626', 700:'#b91c1c', 800:'#991b1b', 900:'#7f1d1d' }
+            }
+          }
+        }
+      }
+    </script>
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
-    <div class="main-container">
-        <!-- LEFT PANEL: FORM -->
-        <div class="form-panel">
-            <div class="header">
-                <h1>🍽️ Invoice Generator</h1>
-                <p>Restaurant Service Tax Invoice</p>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 h-screen overflow-hidden font-sans transition-colors">
+    <div class="flex h-screen flex-col md:flex-row">
+
+        <!-- ===== LEFT PANEL: FORM ===== -->
+        <div class="w-full md:w-1/2 overflow-y-auto bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 p-6 space-y-5">
+
+            <!-- Header -->
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-brand-600 dark:text-brand-400">🍽️ Invoice Generator</h1>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Restaurant Service Tax Invoice</p>
+                </div>
+                <span id="liveBadge" class="live-badge text-xs text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-900/40 px-2 py-0.5 rounded-full">Live Preview</span>
             </div>
 
-            <form id="invoiceForm">
-                <div class="actions">
-                    <button type="button" class="btn btn-secondary" onclick="loadDefaults()">Load Defaults</button>
-                    <button type="button" class="btn btn-primary" onclick="generateFinal()">Download / Print</button>
-                    <span class="live-badge">Live Preview Active</span>
+            <!-- Action bar -->
+            <div class="flex flex-wrap gap-2">
+                <button type="button" onclick="loadDefaults()" class="btn-secondary">Load Defaults</button>
+                <button type="button" onclick="generateFinal()" class="btn-primary">Download / Print</button>
+            </div>
+
+            <form id="invoiceForm" class="space-y-4">
+
+                <!-- ===== BILL LAYOUT PICKER ===== -->
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">Bill Layout</span>
+                        <span id="layoutNameBadge" class="text-xs font-medium text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/30 px-2 py-0.5 rounded-full">Detailed A4</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Bill layout">
+                        <button type="button" class="layout-card selected" id="lc-detailed" onclick="selectLayout('detailed')">
+                            <span class="text-2xl">📋</span>
+                            <span class="text-xs font-semibold mt-1">Detailed</span>
+                            <span class="text-gray-500 dark:text-gray-400" style="font-size:10px">GST Tax · A4</span>
+                        </button>
+                        <button type="button" class="layout-card" id="lc-thermal" onclick="selectLayout('thermal')">
+                            <span class="text-2xl">🧾</span>
+                            <span class="text-xs font-semibold mt-1">Thermal</span>
+                            <span class="text-gray-500 dark:text-gray-400" style="font-size:10px">POS Receipt · 80mm</span>
+                        </button>
+                        <button type="button" class="layout-card" id="lc-compact" onclick="selectLayout('compact')">
+                            <span class="text-2xl">📄</span>
+                            <span class="text-xs font-semibold mt-1">Compact</span>
+                            <span class="text-gray-500 dark:text-gray-400" style="font-size:10px">Clean Table · A4</span>
+                        </button>
+                        <button type="button" class="layout-card" id="lc-hotel-folio" onclick="selectLayout('hotel-folio')">
+                            <span class="text-2xl">🏨</span>
+                            <span class="text-xs font-semibold mt-1">Hotel Folio</span>
+                            <span class="text-gray-500 dark:text-gray-400" style="font-size:10px">Guest Bill · A4</span>
+                        </button>
+                        <button type="button" class="layout-card" id="lc-bistro" onclick="selectLayout('bistro')">
+                            <span class="text-2xl">☕</span>
+                            <span class="text-xs font-semibold mt-1">Bistro</span>
+                            <span class="text-gray-500 dark:text-gray-400" style="font-size:10px">Cafe Style · A4</span>
+                        </button>
+                        <button type="button" class="layout-card" id="lc-fine-dining" onclick="selectLayout('fine-dining')">
+                            <span class="text-2xl">🍷</span>
+                            <span class="text-xs font-semibold mt-1">Fine Dining</span>
+                            <span class="text-gray-500 dark:text-gray-400" style="font-size:10px">Elegant · A4</span>
+                        </button>
+                    </div>
+                    <input type="hidden" id="layout" name="layout" value="detailed">
                 </div>
 
-                <!-- STORE DETAILS -->
-                <div class="section">
-                    <h2>Store Details</h2>
-                    
-                    <div class="form-group">
-                        <label>Upload Logo</label>
-                        <input type="file" id="logo" name="logo" accept="image/*">
+                <!-- STORE DETAILS (collapsible) -->
+                <details open class="section-card">
+                    <summary class="section-title cursor-pointer select-none">Store Details</summary>
+                    <div class="mt-3 space-y-3">
+                        <div>
+                            <label class="lbl">Upload Logo</label>
+                            <input type="file" id="logo" name="logo" accept="image/*" class="inp-file">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div><label class="lbl">Company Name</label><input type="text" id="companyName" name="companyName" class="inp"></div>
+                            <div><label class="lbl">Store Name</label><input type="text" id="storeName" name="storeName" class="inp"></div>
+                            <div><label class="lbl">Phone</label><input type="text" id="storePhone" name="storePhone" class="inp"></div>
+                            <div><label class="lbl">GSTIN</label><input type="text" id="gstin" name="gstin" class="inp"></div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div><label class="lbl">Store Address</label><input type="text" id="storeAddress" name="storeAddress" class="inp"></div>
+                            <div><label class="lbl">Registered Address</label><input type="text" id="registeredAddress" name="registeredAddress" class="inp"></div>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <div><label class="lbl">State Code</label><input type="text" id="stateCode" name="stateCode" class="inp"></div>
+                            <div><label class="lbl">CIN</label><input type="text" id="cin" name="cin" class="inp"></div>
+                            <div><label class="lbl">FSSAI</label><input type="text" id="fssaiNo" name="fssaiNo" class="inp"></div>
+                            <div><label class="lbl">SAC</label><input type="text" id="sacCode" name="sacCode" class="inp"></div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-3">
+                            <div><label class="lbl">Store ID</label><input type="text" id="storeId" name="storeId" class="inp"></div>
+                            <div><label class="lbl">POS No</label><input type="text" id="posNo" name="posNo" class="inp"></div>
+                            <div><label class="lbl">Place of Supply</label><input type="text" id="placeOfSupply" name="placeOfSupply" class="inp"></div>
+                        </div>
                     </div>
+                </details>
 
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Company Name</label>
-                            <input type="text" id="companyName" name="companyName">
+                <!-- ORDER DETAILS -->
+                <details open class="section-card">
+                    <summary class="section-title cursor-pointer select-none">Order Details</summary>
+                    <div class="mt-3 space-y-3">
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <div><label class="lbl">Invoice No</label><input type="text" id="invoiceNumber" name="invoiceNumber" class="inp"></div>
+                            <div><label class="lbl">Date & Time</label><input type="text" id="date" name="date" class="inp"></div>
+                            <div><label class="lbl">Order No</label><input type="text" id="orderNo" name="orderNo" class="inp"></div>
+                            <div><label class="lbl">Token No</label><input type="text" id="tokenNo" name="tokenNo" class="inp"></div>
                         </div>
-                        <div class="form-group">
-                            <label>Store Name</label>
-                            <input type="text" id="storeName" name="storeName">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div><label class="lbl">Cashier ID</label><input type="text" id="cashierId" name="cashierId" class="inp"></div>
+                            <div><label class="lbl">Cashier Name</label><input type="text" id="cashierName" name="cashierName" class="inp"></div>
                         </div>
-                        <div class="form-group">
-                            <label>Phone</label>
-                            <input type="text" id="storePhone" name="storePhone">
-                        </div>
-                        <div class="form-group">
-                            <label>GSTIN</label>
-                            <input type="text" id="gstin" name="gstin">
-                        </div>
-                    </div>
-                    
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Store Address</label>
-                            <input type="text" id="storeAddress" name="storeAddress">
-                        </div>
-                        <div class="form-group">
-                            <label>Registered Address</label>
-                            <input type="text" id="registeredAddress" name="registeredAddress">
+                        <div class="border-t border-gray-200 dark:border-gray-600 pt-3 grid grid-cols-2 gap-3">
+                            <div><label class="lbl">Customer Name</label><input type="text" id="customerName" name="customerName" class="inp"></div>
+                            <div><label class="lbl">Customer Phone</label><input type="text" id="customerPhone" name="customerPhone" class="inp"></div>
                         </div>
                     </div>
-
-                    <div class="form-grid">
-                        <div class="form-group"><label>State Code</label><input type="text" id="stateCode" name="stateCode"></div>
-                        <div class="form-group"><label>CIN</label><input type="text" id="cin" name="cin"></div>
-                        <div class="form-group"><label>FSSAI</label><input type="text" id="fssaiNo" name="fssaiNo"></div>
-                        <div class="form-group"><label>SAC</label><input type="text" id="sacCode" name="sacCode"></div>
-                    </div>
-                    
-                    <div class="form-grid">
-                        <div class="form-group"><label>Store ID</label><input type="text" id="storeId" name="storeId"></div>
-                        <div class="form-group"><label>POS No</label><input type="text" id="posNo" name="posNo"></div>
-                        <div class="form-group"><label>Place of Supply</label><input type="text" id="placeOfSupply" name="placeOfSupply"></div>
-                    </div>
-                </div>
-
-                <!-- INVOICE & CUSTOMER -->
-                <div class="section">
-                    <h2>Order Details</h2>
-                    <div class="form-grid">
-                        <div class="form-group"><label>Invoice No</label><input type="text" id="invoiceNumber" name="invoiceNumber"></div>
-                        <div class="form-group"><label>Date & Time</label><input type="text" id="date" name="date"></div>
-                        <div class="form-group"><label>Order No</label><input type="text" id="orderNo" name="orderNo"></div>
-                        <div class="form-group"><label>Token No</label><input type="text" id="tokenNo" name="tokenNo"></div>
-                    </div>
-                    <div class="form-grid">
-                        <div class="form-group"><label>Cashier ID</label><input type="text" id="cashierId" name="cashierId"></div>
-                        <div class="form-group"><label>Cashier Name</label><input type="text" id="cashierName" name="cashierName"></div>
-                    </div>
-                    
-                    <div class="form-grid" style="margin-top:1rem; border-top:1px solid #ddd; padding-top:1rem">
-                        <div class="form-group"><label>Customer Name</label><input type="text" id="customerName" name="customerName"></div>
-                        <div class="form-group"><label>Customer Phone</label><input type="text" id="customerPhone" name="customerPhone"></div>
-                    </div>
-                </div>
+                </details>
 
                 <!-- ITEMS -->
-                <div class="section">
-                    <h2>Items</h2>
-                    <div id="itemsContainer" class="items-container">
-                        <!-- Items injected by script -->
+                <details open class="section-card">
+                    <summary class="section-title cursor-pointer select-none">Items</summary>
+                    <div class="mt-3">
+                        <div id="itemsContainer" class="space-y-2"></div>
+                        <button type="button" onclick="addItem()" class="mt-3 w-full btn-secondary">+ Add Item</button>
                     </div>
-                    <button type="button" class="btn btn-secondary" onclick="addItem()" style="margin-top:1rem; width:100%">+ Add Item</button>
-                </div>
+                </details>
 
-                <!-- PAYMENT -->
-                <div class="section">
-                    <h2>Payment</h2>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Method</label>
-                            <select id="paymentMethod" name="paymentMethod">
+                <!-- PAYMENT (collapsible) -->
+                <details class="section-card">
+                    <summary class="section-title cursor-pointer select-none">Payment</summary>
+                    <div class="mt-3 grid grid-cols-3 gap-3">
+                        <div>
+                            <label class="lbl">Method</label>
+                            <select id="paymentMethod" name="paymentMethod" class="inp">
                                 <option value="Cash">Cash</option>
                                 <option value="Pine Lab UPI">Pine Lab UPI</option>
                                 <option value="Card">Card</option>
@@ -119,21 +160,104 @@
                                 <option value="Google Pay">Google Pay</option>
                             </select>
                         </div>
-                        <div class="form-group"><label>Trans. Ref</label><input type="text" id="transactionRefNo" name="transactionRefNo"></div>
-                        <div class="form-group"><label>Serial No</label><input type="text" id="serialNo" name="serialNo"></div>
+                        <div><label class="lbl">Trans. Ref</label><input type="text" id="transactionRefNo" name="transactionRefNo" class="inp"></div>
+                        <div><label class="lbl">Serial No</label><input type="text" id="serialNo" name="serialNo" class="inp"></div>
                     </div>
-                </div>
+                </details>
             </form>
-            <div style="height: 50px;"></div> <!-- Spacer -->
+            <div class="h-12"></div>
         </div>
 
-        <!-- RIGHT PANEL: PREVIEW -->
-        <div class="preview-panel">
-            <div class="preview-header">
-                <h3>PDF Preview</h3>
-                <span style="font-size:0.8rem; color:#666">Updates automatically</span>
+        <!-- ===== RIGHT PANEL ===== -->
+        <div class="w-full md:w-1/2 flex flex-col bg-gray-600 dark:bg-gray-950">
+
+            <!-- Toolbar -->
+            <div class="flex items-center justify-between bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-2">
+                <!-- Tab bar -->
+                <div class="flex gap-1">
+                    <button onclick="switchTab('preview')" id="tabPreview" class="tab-btn tab-active">Preview</button>
+                    <button onclick="switchTab('history')" id="tabHistory" class="tab-btn">History</button>
+                    <button onclick="switchTab('bulk')" id="tabBulk" class="tab-btn">Bulk Upload</button>
+                </div>
+                <!-- Dark mode toggle -->
+                <button onclick="toggleDarkMode()" id="darkToggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition" title="Toggle dark mode">
+                    <svg id="iconSun" class="w-5 h-5 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 3v1m0 16v1m8.66-13.66l-.71.71M4.05 19.95l-.71.71M21 12h-1M4 12H3m16.66 7.66l-.71-.71M4.05 4.05l-.71-.71M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    <svg id="iconMoon" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/></svg>
+                </button>
             </div>
-            <iframe id="previewFrame" class="preview-frame" src="about:blank"></iframe>
+
+            <!-- Tab panels -->
+            <!-- PREVIEW -->
+            <div id="panelPreview" class="tab-panel flex-1 flex flex-col">
+                <iframe id="previewFrame" class="flex-1 w-full border-none" src="about:blank"></iframe>
+            </div>
+
+            <!-- HISTORY -->
+            <div id="panelHistory" class="tab-panel flex-1 flex-col hidden overflow-y-auto p-4">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-lg font-semibold text-white">Invoice History</h3>
+                    <button onclick="loadHistory()" class="text-sm text-brand-300 hover:text-brand-200">Refresh</button>
+                </div>
+                <div id="historyList" class="space-y-2"></div>
+                <button id="historyLoadMore" onclick="loadHistoryMore()" class="hidden mt-3 w-full text-center text-sm text-gray-300 hover:text-white py-2 rounded bg-gray-700 hover:bg-gray-600 transition">Load more</button>
+            </div>
+
+            <!-- BULK UPLOAD -->
+            <div id="panelBulk" class="tab-panel flex-1 flex-col hidden overflow-y-auto p-4">
+                <h3 class="text-lg font-semibold text-white mb-3">Bulk Generate from CSV</h3>
+
+                <!-- Output format selector -->
+                <div class="flex gap-4 mb-4 text-sm text-gray-200">
+                    <label class="flex items-center gap-1"><input type="radio" name="bulkOutput" value="zip" checked class="accent-brand-500"> Separate PDFs (ZIP)</label>
+                    <label class="flex items-center gap-1"><input type="radio" name="bulkOutput" value="merged" class="accent-brand-500"> Single merged PDF</label>
+                </div>
+
+                <!-- Layout override pills -->
+                <div class="mb-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm text-gray-300">Layout override</span>
+                        <span class="text-xs text-gray-500">overrides CSV column</span>
+                    </div>
+                    <div class="flex flex-wrap gap-1.5" id="bulkLayoutPills">
+                        <button type="button" class="layout-pill selected" id="blp-auto" onclick="selectBulkLayout('')">Auto</button>
+                        <button type="button" class="layout-pill" id="blp-detailed" onclick="selectBulkLayout('detailed')">📋 Detailed</button>
+                        <button type="button" class="layout-pill" id="blp-thermal" onclick="selectBulkLayout('thermal')">🧾 Thermal</button>
+                        <button type="button" class="layout-pill" id="blp-compact" onclick="selectBulkLayout('compact')">📄 Compact</button>
+                        <button type="button" class="layout-pill" id="blp-hotel-folio" onclick="selectBulkLayout('hotel-folio')">🏨 Hotel</button>
+                        <button type="button" class="layout-pill" id="blp-bistro" onclick="selectBulkLayout('bistro')">☕ Bistro</button>
+                        <button type="button" class="layout-pill" id="blp-fine-dining" onclick="selectBulkLayout('fine-dining')">🍷 Fine Dining</button>
+                    </div>
+                    <input type="hidden" id="bulkLayoutValue" value="">
+                </div>
+
+                <!-- Drop zone -->
+                <div id="dropZone" class="border-2 border-dashed border-gray-400 dark:border-gray-500 rounded-xl p-8 text-center cursor-pointer hover:border-brand-400 transition">
+                    <p class="text-gray-300 dark:text-gray-400 mb-2">Drag & drop a CSV file here</p>
+                    <p class="text-gray-500 text-sm">or click to browse</p>
+                    <input type="file" id="csvFileInput" accept=".csv" class="hidden">
+                </div>
+
+                <!-- Progress -->
+                <div id="bulkProgress" class="hidden mt-4">
+                    <div class="flex items-center justify-between text-sm text-gray-300 mb-1">
+                        <span id="bulkStatusText">Processing…</span>
+                        <span id="bulkCountText"></span>
+                    </div>
+                    <div class="w-full bg-gray-700 rounded-full h-2">
+                        <div id="bulkProgressBar" class="bg-brand-500 h-2 rounded-full transition-all" style="width:0%"></div>
+                    </div>
+                </div>
+
+                <!-- Result -->
+                <div id="bulkResult" class="hidden mt-4 p-4 rounded-lg bg-green-900/30 text-green-300 text-sm"></div>
+                <div id="bulkError" class="hidden mt-4 p-4 rounded-lg bg-red-900/30 text-red-300 text-sm"></div>
+
+                <!-- Sample download -->
+                <a href="/sample/sample-invoices.csv" download class="mt-4 inline-flex items-center gap-1 text-sm text-brand-300 hover:text-brand-200">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
+                    Download sample CSV
+                </a>
+            </div>
         </div>
     </div>
 

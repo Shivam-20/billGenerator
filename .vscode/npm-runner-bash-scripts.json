@@ -1,0 +1,50 @@
+[
+  {
+    "id": "scanned-98c8d5af3e23",
+    "name": "start",
+    "type": "file",
+    "path": "/media/system04/4E36DB0524ADCE651/Project/utilities/BIll/Food/scripts/start.sh",
+    "workingDirectory": "/media/system04/4E36DB0524ADCE651/Project/utilities/BIll/Food/scripts",
+    "args": []
+  },
+  {
+    "id": "scanned-9f841de1bb7b",
+    "name": "stop",
+    "type": "file",
+    "path": "/media/system04/4E36DB0524ADCE651/Project/utilities/BIll/Food/scripts/stop.sh",
+    "workingDirectory": "/media/system04/4E36DB0524ADCE651/Project/utilities/BIll/Food/scripts",
+    "args": []
+  },
+  {
+    "id": "scanned-8507ae0aaa04",
+    "name": "status",
+    "type": "file",
+    "path": "/media/system04/4E36DB0524ADCE651/Project/utilities/BIll/Food/scripts/status.sh",
+    "workingDirectory": "/media/system04/4E36DB0524ADCE651/Project/utilities/BIll/Food/scripts",
+    "args": []
+  },
+  {
+    "id": "scanned-534e49a17d2c",
+    "name": "dev",
+    "type": "file",
+    "path": "/media/system04/4E36DB0524ADCE651/Project/utilities/BIll/Food/scripts/dev.sh",
+    "workingDirectory": "/media/system04/4E36DB0524ADCE651/Project/utilities/BIll/Food/scripts",
+    "args": []
+  },
+  {
+    "id": "scanned-291a226d278e",
+    "name": "restart",
+    "type": "file",
+    "path": "/media/system04/4E36DB0524ADCE651/Project/utilities/BIll/Food/scripts/restart.sh",
+    "workingDirectory": "/media/system04/4E36DB0524ADCE651/Project/utilities/BIll/Food/scripts",
+    "args": []
+  },
+  {
+    "id": "scanned-d9d8e9303f62",
+    "name": "health-check",
+    "type": "file",
+    "path": "/media/system04/4E36DB0524ADCE651/Project/utilities/BIll/Food/scripts/health-check.sh",
+    "workingDirectory": "/media/system04/4E36DB0524ADCE651/Project/utilities/BIll/Food/scripts",
+    "args": []
+  }
+]

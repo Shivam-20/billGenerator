@@ -9,3 +9,16 @@ invoices/*.pdf
 !invoices/.gitkeep
 test-*.pdf
 *.pdf
+
+# Script-generated directories and files
+logs/
+pids/
+*.pid
+
+# Temporary and backup files
+*.tmp
+*.bak
+*~
+
+# Archives from health monitoring
+logs/archived/
